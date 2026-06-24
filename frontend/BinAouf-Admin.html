@@ -755,7 +755,7 @@ Bin Aouf Export Team</textarea></div>
 <script>
 /* ============ BIN AOUF API CLIENT ============ */
 /* Point this at your backend. Local: http://localhost:4000/api  ·  Prod: https://api.binaouf.com/api */
-const API='https://backend-udtn.vercel.app/api';
+const API='https://binaouf-backend.vercel.app/api';
 const Auth={
   get token(){return localStorage.getItem('binaouf_token');},
   set token(t){t?localStorage.setItem('binaouf_token',t):localStorage.removeItem('binaouf_token');}
