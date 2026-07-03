@@ -336,6 +336,12 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
     const updated = inquiries.map(i => i.id === id ? { ...i, archived: true } : i)
     setInquiries(updated); syncInquiries(updated); toast('Inquiry archived')
   }
+  const deleteInquiry = (id) => {
+    askConfirm('Delete this inquiry permanently? This cannot be undone.', () => {
+      const updated = inquiries.filter(i => i.id !== id)
+      setInquiries(updated); syncInquiries(updated); toast('Inquiry deleted')
+    })
+  }
   const sendReply = (id) => {
     const updated = inquiries.map(i => i.id === id ? { ...i, read: true } : i)
     setInquiries(updated); syncInquiries(updated); setReplyModal({ show: false, data: null }); toast('Reply sent ✓')
@@ -804,6 +810,9 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
                 </button>
                 {!i.read && <button className="btn btn-outline btn-sm" onClick={() => markRead(i.id)}>Mark as read</button>}
                 <button className="btn-ghost btn-sm" onClick={() => archiveInq(i.id)}>Archive</button>
+                <button className="btn btn-danger btn-sm" onClick={() => deleteInquiry(i.id)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete
+                </button>
               </div>
             </div>
           </div>

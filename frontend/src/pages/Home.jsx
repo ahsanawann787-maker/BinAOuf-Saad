@@ -88,7 +88,7 @@ export default function Home() {
           <div className="hero-tag">Straight from Khewra, Warcha and Kalabagh.</div>
           <h1 className="hero-h1">Nature's Purest<br /><em>Salt</em> Delivered<br />to the World</h1>
           <p className="hero-sub">Crafted by Nature. Delivered by Bin Aouf.</p>
-  
+
           <p className="hero-p">
             Bin Aouf brings you the finest Himalayan pink salt, ethically sourced from Pakistan's ancient mines.
             Edible, wellness, décor, and livestock salt for global buyers.
