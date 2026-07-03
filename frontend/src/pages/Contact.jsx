@@ -43,6 +43,32 @@ export default function Contact() {
       if (!res?.ok) throw new Error(res?.error || 'Failed')
       setSuccess(true)
 
+      // Send email via Web3Forms (non-blocking)
+      try {
+        const web3FormsData = {
+          access_key: '58261e39-6653-4168-98c0-f684c48b2fa4',
+          subject: `New Inquiry from ${name} (${country})`,
+          from_name: 'Bin Aouf Website',
+          name: name,
+          email: email,
+          phone: form.phone || '—',
+          company: form.company || '—',
+          country: country,
+          product: product,
+          order_type: orderType,
+          quantity: form.qty || '—',
+          market: form.market || '—',
+          message: message
+        }
+        fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(web3FormsData)
+        }).catch(e => console.error('Web3Forms error:', e))
+      } catch (e) {
+        console.error('Web3Forms dispatch error:', e)
+      }
+
       // Construct WhatsApp message
       const waMessage = `*New Inquiry from Bin Aouf Website*
 
