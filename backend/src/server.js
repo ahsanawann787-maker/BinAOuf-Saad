@@ -1,3 +1,4 @@
+// Server entry point - environment variables loaded - CORS allowed for binaouf.com
 import { env } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 import { createApp } from './app.js';
