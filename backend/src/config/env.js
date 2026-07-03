@@ -30,7 +30,7 @@ export const env = {
   admin: {
     name: process.env.ADMIN_NAME || 'Roman Amjid',
     email: (process.env.ADMIN_EMAIL || 'admin@binaouf.com').toLowerCase(),
-    password: process.env.ADMIN_PASSWORD || 'ChangeThisStrongPassword#2026',
+    password: process.env.ADMIN_PASSWORD || 'Binaoufsaltcompany123',
   },
   maxUploadMb: Number(process.env.MAX_UPLOAD_MB) || 5,
   isProd: (process.env.NODE_ENV || 'development') === 'production',
