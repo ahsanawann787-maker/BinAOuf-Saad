@@ -42,6 +42,26 @@ export default function Contact() {
       const res = await api.submitInquiry({ ...form, orderType })
       if (!res?.ok) throw new Error(res?.error || 'Failed')
       setSuccess(true)
+
+      // Construct WhatsApp message
+      const waMessage = `*New Inquiry from Bin Aouf Website*
+
+*Name:* ${name}
+*Company:* ${form.company || '—'}
+*Email:* ${email}
+*WhatsApp/Phone:* ${form.phone || '—'}
+*Country:* ${country}
+*Product Interest:* ${product}
+*Order Type:* ${orderType}
+*Approximate Quantity:* ${form.qty || '—'}
+*Target Market:* ${form.market || '—'}
+
+*Message:*
+${message}`;
+
+      const whatsappUrl = `https://wa.me/923110282668?text=${encodeURIComponent(waMessage)}`;
+      window.open(whatsappUrl, '_blank');
+
       setForm({ name: '', company: '', email: '', phone: '', country: '', product: '', qty: '', market: '', message: '' })
       setTimeout(() => setSuccess(false), 8000)
     } catch (err) {
