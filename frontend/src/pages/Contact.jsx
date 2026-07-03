@@ -77,7 +77,10 @@ ${message}`;
       }
       await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(web3FormsData)
       })
     } catch (e) {
@@ -91,11 +94,11 @@ ${message}`;
       console.error('Backend database submit error (continuing anyway):', err)
     }
 
-    // 3. Open WhatsApp in new tab
+    // 3. Redirect to WhatsApp (never blocked by browser popup blockers)
     try {
-      window.open(whatsappUrl, '_blank')
+      window.location.href = whatsappUrl;
     } catch (e) {
-      console.error('Popup blocker window.open error:', e)
+      console.error('WhatsApp redirection error:', e)
     }
 
     setSuccess(true)
