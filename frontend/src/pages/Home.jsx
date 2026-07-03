@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
+import api from '../services/api'
 import HomeTicker from '../components/HomeTicker'
 import cooking from '../assets/images/cooking_slider.jpg'
 import bath from '../assets/images/bath_slider.jpg'
@@ -17,7 +18,7 @@ const SLIDER_CATEGORIES = [
   { id: 'decor', title: 'Candle Salt Holders', desc: 'Tea light holders carved in round, heart and cube shapes.', grad: 'e0a880,8a4828' },
   { id: 'animal', title: 'Animal Lick Salt', desc: 'Natural mineral blocks for cattle, horses, sheep and goats.', grad: 'c47058,5c2318' },
   { id: 'edible', title: 'Edible Salt', desc: 'Fine grain, coarse, iodized and gourmet cooking salt.', grad: 'e89a7a,7a3020' },
-  { id: 'edible', title: 'Rock Salt', desc: 'Raw natural rock salt chunks and lumps for grinders and gourmet use.', grad: 'd4a882,9b5040' },
+  { id: 'edible', title: 'Rock Salt', desc: 'Raw natural rock salt lumps and bulk grades for grinders and gourmet use.', grad: 'd4a882,9b5040' },
   { id: 'decor', title: 'Kitchen and Accessories', desc: 'Cooking slabs and serving accessories for chefs.', grad: 'c9a96e,7a4020' },
   { id: 'tilesbricks', title: 'Salt Tiles and Bricks', desc: 'The Building Blocks of Glowing warmth and Lasting wellness.', grad: 'c9a96e,7a4020' },
 ]
@@ -33,10 +34,43 @@ const SLIDES = [
   { img: saunaRetreat, alt: 'Sauna & Retreat Interiors', tag: 'In Every Setting', title: 'Sauna Interiors', desc: 'Premium salt sauna walls and retreat room builds from custom-cut bricks.' },
 ]
 
+const GRADS = [
+  'd4876b,5c2318',
+  'e8b090,7a3828',
+  'e0a880,8a4828',
+  'c47058,5c2318',
+  'e89a7a,7a3020',
+  'd4a882,9b5040',
+  'c9a96e,7a4020'
+]
+
 export default function Home() {
   useReveal()
   const navigate = useNavigate()
   const [slideIdx, setSlideIdx] = useState(0)
+  const [homeCats, setHomeCats] = useState(SLIDER_CATEGORIES)
+
+  useEffect(() => {
+    let active = true
+    async function fetchHomeCats() {
+      try {
+        const res = await api.getPublicHomeCategories()
+        if (active && res?.data && res.data.length > 0) {
+          const mapped = res.data.map((item, idx) => ({
+            id: item.link,
+            title: item.title,
+            desc: item.desc,
+            grad: GRADS[idx % GRADS.length]
+          }))
+          setHomeCats(mapped)
+        }
+      } catch (err) {
+        console.error('Failed to load home categories from DB:', err)
+      }
+    }
+    fetchHomeCats()
+    return () => { active = false }
+  }, [])
 
   const goSlide = (dir) => {
     setSlideIdx((i) => (i + dir + SLIDES.length) % SLIDES.length)
@@ -88,7 +122,7 @@ export default function Home() {
         </div>
         <div className="cats-slider-outer">
           <div className="cats-slider-track" id="catsSliderTrack">
-            {SLIDER_CATEGORIES.map(({ id, title, desc, grad }, index) => (
+            {homeCats.map(({ id, title, desc, grad }, index) => (
               <div
                 key={`${id}-${index}`}
                 className="cat-card cat-slide-card"
@@ -107,7 +141,7 @@ export default function Home() {
               </div>
             ))}
             {/* Duplicate for infinite loop */}
-            {SLIDER_CATEGORIES.map(({ id, title, desc, grad }, index) => (
+            {homeCats.map(({ id, title, desc, grad }, index) => (
               <div
                 key={`${id}-${index}-dup`}
                 className="cat-card cat-slide-card"

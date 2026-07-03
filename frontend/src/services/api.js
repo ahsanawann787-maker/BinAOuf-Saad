@@ -42,6 +42,11 @@ export const api = {
   // Public
   submitInquiry: (payload) =>
     request('/public/inquiries', { method: 'POST', body: payload }),
+  getPublicProducts: () => request('/public/products'),
+  getPublicCategories: () => request('/public/categories'),
+  getPublicHomeCategories: () => request('/public/home-categories'),
+  getPublicCertifications: () => request('/public/certifications'),
+  getPublicSettings: () => request('/public/settings'),
 
   // Admin
   getProducts: () => request('/admin/products'),
