@@ -27,6 +27,7 @@ export default function Contact() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [openFaq, setOpenFaq] = useState(null)
+  const [lastWaUrl, setLastWaUrl] = useState('')
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
@@ -38,39 +39,8 @@ export default function Contact() {
     }
     setError('')
     setSubmitting(true)
-    try {
-      const res = await api.submitInquiry({ ...form, orderType })
-      if (!res?.ok) throw new Error(res?.error || 'Failed')
-      setSuccess(true)
 
-      // Send email via Web3Forms (non-blocking)
-      try {
-        const web3FormsData = {
-          access_key: '58261e39-6653-4168-98c0-f684c48b2fa4',
-          subject: `New Inquiry from ${name} (${country})`,
-          from_name: 'Bin Aouf Website',
-          name: name,
-          email: email,
-          phone: form.phone || '—',
-          company: form.company || '—',
-          country: country,
-          product: product,
-          order_type: orderType,
-          quantity: form.qty || '—',
-          market: form.market || '—',
-          message: message
-        }
-        fetch('https://api.web3forms.com/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(web3FormsData)
-        }).catch(e => console.error('Web3Forms error:', e))
-      } catch (e) {
-        console.error('Web3Forms dispatch error:', e)
-      }
-
-      // Construct WhatsApp message
-      const waMessage = `*New Inquiry from Bin Aouf Website*
+    const waMessage = `*New Inquiry from Bin Aouf Website*
 
 *Name:* ${name}
 *Company:* ${form.company || '—'}
@@ -85,16 +55,53 @@ export default function Contact() {
 *Message:*
 ${message}`;
 
-      const whatsappUrl = `https://wa.me/923110282668?text=${encodeURIComponent(waMessage)}`;
-      window.open(whatsappUrl, '_blank');
+    const whatsappUrl = `https://wa.me/923110282668?text=${encodeURIComponent(waMessage)}`;
+    setLastWaUrl(whatsappUrl)
 
-      setForm({ name: '', company: '', email: '', phone: '', country: '', product: '', qty: '', market: '', message: '' })
-      setTimeout(() => setSuccess(false), 8000)
-    } catch (err) {
-      setError('Sorry, your inquiry could not be sent. Please WhatsApp us at +92 311 028 2668.')
-    } finally {
-      setSubmitting(false)
+    // 1. Send email via Web3Forms (blocking so it registers before redirects)
+    try {
+      const web3FormsData = {
+        access_key: '58261e39-6653-4168-98c0-f684c48b2fa4',
+        subject: `New Inquiry from ${name} (${country})`,
+        from_name: 'Bin Aouf Website',
+        name: name,
+        email: email,
+        phone: form.phone || '—',
+        company: form.company || '—',
+        country: country,
+        product: product,
+        order_type: orderType,
+        quantity: form.qty || '—',
+        market: form.market || '—',
+        message: message
+      }
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(web3FormsData)
+      })
+    } catch (e) {
+      console.error('Web3Forms dispatch error:', e)
     }
+
+    // 2. Try sending to database backend (non-blocking so local/database issues do not halt flow)
+    try {
+      await api.submitInquiry({ ...form, orderType })
+    } catch (err) {
+      console.error('Backend database submit error (continuing anyway):', err)
+    }
+
+    // 3. Open WhatsApp in new tab
+    try {
+      window.open(whatsappUrl, '_blank')
+    } catch (e) {
+      console.error('Popup blocker window.open error:', e)
+    }
+
+    setSuccess(true)
+    setForm({ name: '', company: '', email: '', phone: '', country: '', product: '', qty: '', market: '', message: '' })
+    setSubmitting(false)
+    setTimeout(() => setSuccess(false), 30000)
   }
 
   return (
@@ -244,8 +251,19 @@ ${message}`;
           </button>
 
           {success && (
-            <div className="form-success">
-              Thank you! Our export team will reply within 24 hours. For urgent queries, WhatsApp us at +92 311 028 2668.
+            <div className="form-success" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>Thank you! Our export team has received your inquiry. We will reply within 24 hours.</div>
+              {lastWaUrl && (
+                <a 
+                  href={lastWaUrl} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="btn-primary" 
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', background: '#25D366', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: 8, fontWeight: 600, gap: 8, width: 'fit-content' }}
+                >
+                  💬 Chat on WhatsApp Now
+                </a>
+              )}
             </div>
           )}
           <p className="form-note">Your information is confidential. We never share client details. NDA available on request.</p>
