@@ -4,9 +4,14 @@ dotenv.config();
 const required = ['MONGO_URI', 'JWT_SECRET'];
 const missing = required.filter((k) => !process.env[k]);
 if (missing.length) {
-  console.error(`✖ Missing required env vars: ${missing.join(', ')}`);
-  console.error('  Copy .env.example → .env and fill them in.');
-  process.exit(1);
+  const msg = `Missing required env vars: ${missing.join(', ')} — copy .env.example → .env and fill them in.`;
+  console.error('✖ ' + msg);
+  // Use throw instead of process.exit so serverless handlers can catch this gracefully.
+  if (process.env.VERCEL || process.env.VERCEL_ENV) {
+    throw new Error(msg);
+  } else {
+    process.exit(1);
+  }
 }
 
 export const env = {
