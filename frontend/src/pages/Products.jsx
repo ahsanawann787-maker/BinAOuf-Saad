@@ -206,7 +206,10 @@ export default function Products() {
               </h2>
               <p>{currentCat.desc || 'Premium grade Himalayan salt solutions.'}</p>
             </div>
-            <div className="psh-img" style={{ background: `linear-gradient(155deg,${catGrad})` }} />
+            <div className="psh-img" style={currentCat.img
+                ? { backgroundImage: `url(${currentCat.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                : { background: `linear-gradient(155deg,${catGrad})` }
+              } />
           </div>
 
           {activeProducts.length === 0 ? (

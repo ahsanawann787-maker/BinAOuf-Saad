@@ -8,6 +8,7 @@ const categorySchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     emoji: { type: String, default: '📦' },
     desc: { type: String, default: '' },
+    img: { type: String, default: '' },
     order: { type: Number, default: 0 },
   },
   baseOpts

@@ -253,7 +253,9 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   }
   const saveCat = (formData) => {
     const updated = cats.map(c => c.id === formData.id ? { ...c, ...formData } : c)
-    setCats(updated); setCatModal({ show: false, data: null }); toast('Category updated ✓')
+    setCats(updated)
+    api.bulkPush('categories', updated).catch(e => console.error('Category sync error:', e))
+    setCatModal({ show: false, data: null }); toast('Category updated ✓')
   }
   const addColumn = (catId, label) => {
     const existing = colsFor(catId)
@@ -518,7 +520,11 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
                   <button className="cat-edit" onClick={(e) => { e.stopPropagation(); setCatModal({ show: true, data: { ...cat } }) }}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
                   </button>
-                  <div className="cat-emoji">{cat.emoji}</div>
+                  {cat.img ? (
+                    <div className="cat-emoji" style={{ background: `url(${cat.img}) center/cover`, borderRadius: 8, width: 48, height: 48, display: 'inline-block' }} />
+                  ) : (
+                    <div className="cat-emoji">{cat.emoji}</div>
+                  )}
                   <h4>{cat.name}</h4>
                   <p>{cat.desc}</p>
                   <div className="cat-meta">
@@ -1017,7 +1023,15 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
         footer={<><button className="btn btn-outline" onClick={() => setCatModal({ show: false, data: null })}>Cancel</button><button className="btn btn-primary" onClick={() => saveCat(catModal.data)}>Save Category</button></>}>
         {catModal.data && (
           <>
-            <div className="field"><label>Emoji / Icon</label><input className="inp" value={catModal.data.emoji||''} maxLength={4} style={{ width:90, textAlign:'center', fontSize:20 }} onChange={(e) => setCatModal(m => ({ ...m, data: { ...m.data, emoji: e.target.value } }))} /></div>
+            <div className="field"><label>Category Image <small>shown in category cards</small></label>
+              <ImgUpload
+                img={catModal.data.img || ''}
+                onImg={(img) => setCatModal(m => ({ ...m, data: { ...m.data, img } }))}
+                onRemove={() => setCatModal(m => ({ ...m, data: { ...m.data, img: '' } }))}
+                phEmoji={catModal.data.emoji || '📦'}
+              />
+            </div>
+            <div className="field"><label>Emoji / Icon <small>fallback if no image</small></label><input className="inp" value={catModal.data.emoji||''} maxLength={4} style={{ width:90, textAlign:'center', fontSize:20 }} onChange={(e) => setCatModal(m => ({ ...m, data: { ...m.data, emoji: e.target.value } }))} /></div>
             <div className="field"><label>Category Name</label><input className="inp" value={catModal.data.name||''} onChange={(e) => setCatModal(m => ({ ...m, data: { ...m.data, name: e.target.value } }))} /></div>
             <div className="field mb-0"><label>Description</label><textarea className="inp" value={catModal.data.desc||''} onChange={(e) => setCatModal(m => ({ ...m, data: { ...m.data, desc: e.target.value } }))} /></div>
           </>

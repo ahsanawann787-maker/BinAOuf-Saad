@@ -54,12 +54,13 @@ export default function Home() {
     let active = true
     async function fetchHomeCats() {
       try {
-        const res = await api.getPublicHomeCategories()
+        const res = await api.getPublicCategories()
         if (active && res?.data && res.data.length > 0) {
           const mapped = res.data.map((item, idx) => ({
-            id: item.link,
-            title: item.title,
+            id: item.id,
+            title: item.name,
             desc: item.desc,
+            img: item.img || '',
             grad: GRADS[idx % GRADS.length]
           }))
           setHomeCats(mapped)
@@ -122,7 +123,7 @@ export default function Home() {
         </div>
         <div className="cats-slider-outer">
           <div className="cats-slider-track" id="catsSliderTrack">
-            {homeCats.map(({ id, title, desc, grad }, index) => (
+            {homeCats.map(({ id, title, desc, grad, img }, index) => (
               <div
                 key={`${id}-${index}`}
                 className="cat-card cat-slide-card"
@@ -130,7 +131,10 @@ export default function Home() {
               >
                 <div
                   className="cat-img-bg"
-                  style={{ background: `linear-gradient(155deg,#${grad})` }}
+                  style={img
+                    ? { backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                    : { background: `linear-gradient(155deg,#${grad})` }
+                  }
                 />
                 <div className="cat-overlay" />
                 <div className="cat-body">
@@ -141,7 +145,7 @@ export default function Home() {
               </div>
             ))}
             {/* Duplicate for infinite loop */}
-            {homeCats.map(({ id, title, desc, grad }, index) => (
+            {homeCats.map(({ id, title, desc, grad, img }, index) => (
               <div
                 key={`${id}-${index}-dup`}
                 className="cat-card cat-slide-card"
@@ -150,7 +154,10 @@ export default function Home() {
               >
                 <div
                   className="cat-img-bg"
-                  style={{ background: `linear-gradient(155deg,#${grad})` }}
+                  style={img
+                    ? { backgroundImage: `url(${img})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                    : { background: `linear-gradient(155deg,#${grad})` }
+                  }
                 />
                 <div className="cat-overlay" />
                 <div className="cat-body">
