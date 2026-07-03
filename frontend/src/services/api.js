@@ -1,10 +1,10 @@
 // Central API service for Bin Aouf backend
-const API = import.meta.env.VITE_API_URL || 'https://backend-udtn.vercel.app/api'
+const API = import.meta.env.VITE_API_URL || 'https://binaouf-backend.vercel.app/api'
 
 // Auth token helpers
 const Auth = {
   get token() { try { return localStorage.getItem('ba_token') } catch { return null } },
-  set token(v) { try { if (v) localStorage.setItem('ba_token', v); else localStorage.removeItem('ba_token') } catch {} },
+  set token(v) { try { if (v) localStorage.setItem('ba_token', v); else localStorage.removeItem('ba_token') } catch { } },
 }
 
 async function request(path, options = {}) {
