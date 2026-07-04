@@ -1,5 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
+import { Card } from '../models/Card.js';
+import { nextSeq } from '../utils/counter.js';
 
 /**
  * Generic CRUD controller for resources keyed by a business `id`.
@@ -39,6 +41,15 @@ export function crudController({
     if (transform) body = await transform(body, req);
     if (body.id == null) body.id = await genId(body);
     const doc = await Model.create(body);
+
+    if (Model.modelName === 'Product') {
+      const cardExists = await Card.findOne({ productId: doc.id });
+      if (!cardExists) {
+        const cardId = await nextSeq('card');
+        await Card.create({ id: cardId, productId: doc.id, visible: true });
+      }
+    }
+
     res.status(201).json({ ok: true, data: doc });
   });
 
@@ -58,6 +69,11 @@ export function crudController({
   const remove = asyncHandler(async (req, res) => {
     const doc = await Model.findOneAndDelete({ id: coerce(req.params.id) });
     if (!doc) throw ApiError.notFound();
+
+    if (Model.modelName === 'Product') {
+      await Card.deleteMany({ productId: doc.id });
+    }
+
     res.json({ ok: true, data: { id: doc.id } });
   });
 

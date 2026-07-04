@@ -7,6 +7,9 @@ import { HomeCat } from '../models/HomeCat.js';
 import { Cert } from '../models/Cert.js';
 import { Order } from '../models/Order.js';
 import { Customer } from '../models/Customer.js';
+import { Card } from '../models/Card.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/ApiError.js';
 
 const AVA = ['C9A84C', 'B65C3A', 'D98E73', '3D6FA8', '9A4A2C', '3F8F5F', 'C0432F', 'C19A4B'];
 const randCc = () => AVA[Math.floor(Math.random() * AVA.length)];
@@ -60,4 +63,67 @@ export const customerCtrl = crudController({
     if (!body.cc) body.cc = randCc();
     return body;
   },
+});
+
+export const cardCtrl = {
+  ...crudController({
+    Model: Card,
+    genId: () => nextSeq('card'),
+    defaultSort: { id: 1 },
+  }),
+  list: asyncHandler(async (req, res) => {
+    const cards = await Card.find().sort({ id: 1 }).lean({ virtuals: true });
+    const productIds = cards.map(c => c.productId);
+    const products = await Product.find({ id: { $in: productIds } }).lean();
+    const productsMap = new Map(products.map(p => [p.id, p]));
+    const data = cards.map(c => ({
+      ...c,
+      product: productsMap.get(c.productId) || null
+    }));
+    res.json({ ok: true, count: data.length, data });
+  }),
+  getOne: asyncHandler(async (req, res) => {
+    const card = await Card.findOne({ id: Number(req.params.id) }).lean({ virtuals: true });
+    if (!card) throw ApiError.notFound();
+    const product = await Product.findOne({ id: card.productId }).lean();
+    res.json({ ok: true, data: { ...card, product } });
+  }),
+};
+
+/**
+ * POST /admin/products/:id/publish-card
+ * Creates a card for the product (or makes visible if one already exists).
+ * The product itself is never touched.
+ */
+export const publishCard = asyncHandler(async (req, res) => {
+  const productId = Number(req.params.id);
+  const product = await Product.findOne({ id: productId }).lean();
+  if (!product) throw ApiError.notFound('Product not found');
+
+  let card = await Card.findOne({ productId });
+  if (card) {
+    // Already exists — just make it visible
+    card = await Card.findOneAndUpdate(
+      { productId },
+      { $set: { visible: true } },
+      { new: true }
+    );
+  } else {
+    // Create a fresh card
+    const cardId = await nextSeq('card');
+    card = await Card.create({ id: cardId, productId, visible: true });
+  }
+  res.json({ ok: true, data: card });
+});
+
+/**
+ * DELETE /admin/products/:id/publish-card
+ * Removes the card linked to this product.
+ * The product itself remains untouched in the Products collection.
+ */
+export const unpublishCard = asyncHandler(async (req, res) => {
+  const productId = Number(req.params.id);
+  const card = await Card.findOneAndDelete({ productId });
+  // No error if card doesn't exist — idempotent
+  res.json({ ok: true, data: { productId, cardDeleted: !!card } });
 });

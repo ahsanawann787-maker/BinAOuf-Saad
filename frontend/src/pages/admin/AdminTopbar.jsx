@@ -1,6 +1,7 @@
 const TITLES = {
   dashboard: ['Dashboard', 'Welcome back 👋'],
   products: ['Products', 'Manage your salt catalog'],
+  cards: ['Published Cards', 'Manage cards shown on the website'],
   orders: ['Orders', 'Track export & retail orders'],
   customers: ['Customers', 'Your importers & buyers'],
   inquiries: ['Inquiries', 'Quote requests & messages'],

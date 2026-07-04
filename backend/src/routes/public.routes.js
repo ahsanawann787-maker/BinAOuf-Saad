@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
 import { inquiryPublicSchema } from '../validators/schemas.js';
 import { Product } from '../models/Product.js';
+import { Card } from '../models/Card.js';
 import { Category } from '../models/Category.js';
 import { HomeCat } from '../models/HomeCat.js';
 import { Cert } from '../models/Cert.js';
@@ -13,14 +14,28 @@ const r = Router();
 
 // Active products only; optional ?cat=slug filter.
 r.get('/products', asyncHandler(async (req, res) => {
+  const cards = await Card.find({ visible: true }).lean();
+  const cardProductIds = new Set(cards.map(c => c.productId));
+
   const filter = { status: 'Active' };
   if (req.query.cat) filter.cat = String(req.query.cat);
-  const data = await Product.find(filter).sort({ id: 1 }).lean({ virtuals: true });
+  const products = await Product.find(filter).sort({ id: 1 }).lean({ virtuals: true });
+  
+  const data = products.map(p => ({
+    ...p,
+    showInCard: cardProductIds.has(p.id)
+  }));
+  
   res.json({ ok: true, count: data.length, data });
 }));
 
+
 r.get('/products/:id', asyncHandler(async (req, res) => {
-  const data = await Product.findOne({ id: Number(req.params.id), status: 'Active' }).lean({ virtuals: true });
+  const productId = Number(req.params.id);
+  const card = await Card.findOne({ productId, visible: true });
+  if (!card) return res.status(404).json({ ok: false, error: 'Not found' });
+
+  const data = await Product.findOne({ id: productId, status: 'Active' }).lean({ virtuals: true });
   if (!data) return res.status(404).json({ ok: false, error: 'Not found' });
   res.json({ ok: true, data });
 }));

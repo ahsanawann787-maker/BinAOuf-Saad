@@ -5,6 +5,7 @@ import api from '../../services/api'
 const randCc = () => ['C9A84C','B65C3A','D98E73','3D6FA8','9A4A2C','3F8F5F','C0432F','C19A4B'][Math.floor(Math.random()*8)]
 const esc = (s) => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
 const parseAmt = (a) => parseFloat(String(a).replace(/[^0-9.]/g,'')) || 0
+const slugify = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 function useDebounce(fn, delay) {
   const t = useRef(null)
   return useCallback((...args) => { clearTimeout(t.current); t.current = setTimeout(() => fn(...args), delay) }, [fn, delay])
@@ -126,6 +127,7 @@ function RevenueChart() {
 export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setCats, activeCat, setActiveCat }) {
   /* ── data state ── */
   const [products, setProducts] = useState([])
+  const [cards, setCards] = useState([])
   const [homecats, setHomecats] = useState([])
   const [certs, setCerts] = useState([])
   const [orders, setOrders] = useState([])
@@ -155,8 +157,8 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   useEffect(() => {
     const boot = async () => {
       try {
-        const [c, p, h, ce, o, cu, inq, cl, s] = await Promise.all([
-          api.getCategories(), api.getProducts(), 
+        const [c, p, cardRes, h, ce, o, cu, inq, cl, s] = await Promise.all([
+          api.getCategories(), api.getProducts(), api.getCards(),
           api.getHomeCategories(),
           api.getCertifications(),
           api.getOrders(), api.getCustomers(), api.getInquiries(),
@@ -167,6 +169,7 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
         const ps = Array.isArray(p?.data) ? p.data : []
         // ensure specs exists on each product
         setProducts(ps.map(pr => ({ ...pr, specs: pr.specs || {} })))
+        setCards(Array.isArray(cardRes?.data) ? cardRes.data : [])
         setHomecats(Array.isArray(h?.data) ? h.data : [])
         setCerts(Array.isArray(ce?.data) ? ce.data : [])
         setOrders(Array.isArray(o?.data) ? o.data : [])
@@ -197,6 +200,7 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
 
   /* ── sync helpers ── */
   const syncProducts = useDebounce((data) => api.bulkPush('products', data), 600)
+  const syncCards = useDebounce((data) => api.bulkPush('cards', data), 600)
   const syncOrders = useDebounce((data) => api.bulkPush('orders', data), 600)
   const syncCustomers = useDebounce((data) => api.bulkPush('customers', data), 600)
   const syncInquiries = useDebounce((data) => api.bulkPush('inquiries', data), 600)
@@ -224,7 +228,44 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
     const catCols = colsFor(catId)
     const specs = {}
     catCols.forEach(c => { specs[c.key] = prod?.specs?.[c.key] ?? '—' })
-    setProdModal({ show: true, data: prod ? { ...prod, specs } : { cat: catId, name: '', desc: '', status: 'Active', tags: '', img: '', specs } })
+    const defaultShowInCard = prod ? (prod.showInCard === undefined ? true : prod.showInCard) : (prodView === 'cards')
+    setProdModal({ show: true, data: prod ? { ...prod, specs } : { cat: catId, subcat: '', name: '', desc: '', status: 'Active', tags: '', img: '', specs, showInCard: defaultShowInCard } })
+  }
+  const addCategory = (categoryData) => {
+    const id = slugify(categoryData.id || categoryData.name)
+    const name = String(categoryData.name || '').trim()
+    if (!id || !name) return null
+    if (cats.some((c) => c.id === id)) return cats.find((c) => c.id === id)
+    const updated = [...cats, { id, name, emoji: categoryData.emoji || '📦', desc: categoryData.desc || '', order: cats.length, subcategories: [] }]
+    setCats(updated)
+    api.bulkPush('categories', updated).catch((e) => console.error('Category sync error:', e))
+    toast('Category created ✓')
+    return updated[updated.length - 1]
+  }
+  const addSubcategory = (catId, subData) => {
+    const id = slugify(subData.id || subData.name)
+    const name = String(subData.name || '').trim()
+    if (!catId || !id || !name) return null
+    const target = cats.find((c) => c.id === catId)
+    if (!target) return null
+    const existing = target.subcategories || []
+    if (existing.some((s) => s.id === id)) return existing.find((s) => s.id === id)
+    const updated = cats.map((c) => c.id === catId ? { ...c, subcategories: [...existing, { id, name, desc: subData.desc || '', order: existing.length }] } : c)
+    setCats(updated)
+    api.bulkPush('categories', updated).catch((e) => console.error('Category sync error:', e))
+    toast('Subcategory created ✓')
+    return updated.find((c) => c.id === catId)?.subcategories?.find((s) => s.id === id)
+  }
+  const deleteSubcategory = (catId, subId) => {
+    askConfirm('Delete this subcategory? Products in this subcategory will be uncategorized.', () => {
+      const updatedCats = cats.map(c => c.id === catId ? { ...c, subcategories: (c.subcategories || []).filter(s => s.id !== subId) } : c)
+      const updatedProducts = products.map(p => (p.cat === catId && (p.subcat === subId || p.subCategory === subId)) ? { ...p, subcat: '' } : p)
+      setCats(updatedCats); setProducts(updatedProducts)
+      api.bulkPush('categories', updatedCats).catch(e => console.error('Category sync error:', e))
+      syncProducts(updatedProducts)
+      toast('Subcategory deleted')
+      setCatModal(m => ({ ...m, data: updatedCats.find(c => c.id === catId) || null }))
+    }, 'Delete')
   }
   const saveProduct = (formData) => {
     let updated
@@ -243,6 +284,32 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
       setProducts(updated); syncProducts(updated); toast('Product deleted')
     })
   }
+  const getProductCard = (productId) => cards.find(c => c.productId === productId)
+  const publishCard = async (productId) => {
+    const cardExists = getProductCard(productId)
+    if (cardExists) { toast('Card is already published'); return }
+    try {
+      const res = await api.publishCard(productId)
+      if (res?.data) setCards(prev => [...prev.filter(c => c.productId !== productId), res.data])
+      toast('Card published ✓')
+    } catch(e) { toast('Failed to publish card') }
+  }
+  const unpublishCard = async (productId) => {
+    try {
+      await api.unpublishCard(productId)
+      setCards(prev => prev.filter(c => c.productId !== productId))
+      toast('Card hidden ✓')
+    } catch(e) { toast('Failed to hide card') }
+  }
+  const deleteCard = (id) => {
+    askConfirm('Delete this card? The product will still exist and can be published again.', async () => {
+      try {
+        await api.deleteCard(id)
+        setCards(prev => prev.filter(c => c.id !== id))
+        toast('Card deleted ✓')
+      } catch(e) { toast('Failed to delete card') }
+    })
+  }
   const updateProdField = (id, key, val) => {
     const updated = products.map(p => p.id === id ? { ...p, [key]: val } : p)
     setProducts(updated); syncProducts(updated)
@@ -256,6 +323,17 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
     setCats(updated)
     api.bulkPush('categories', updated).catch(e => console.error('Category sync error:', e))
     setCatModal({ show: false, data: null }); toast('Category updated ✓')
+  }
+  const deleteCategory = (catId) => {
+    askConfirm('Delete this category and all its products? This cannot be undone.', () => {
+      const updatedCats = cats.filter(c => c.id !== catId)
+      const updatedProducts = products.filter(p => p.cat !== catId)
+      setCats(updatedCats); setProducts(updatedProducts)
+      api.bulkPush('categories', updatedCats).catch(e => console.error('Category sync error:', e))
+      syncProducts(updatedProducts)
+      toast('Category deleted')
+      setCatModal({ show: false, data: null })
+    }, 'Delete')
   }
   const addColumn = (catId, label) => {
     const existing = colsFor(catId)
@@ -600,6 +678,15 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
                           </td>
                           <td className="c-act">
                             <div className="row-act">
+                              {getProductCard(p.id) ? (
+                                <button className="ico-btn ok" title="Hide Card" style={{ color: 'var(--rose)' }} onClick={() => unpublishCard(p.id)}>
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                </button>
+                              ) : (
+                                <button className="ico-btn info" title="Show Card" style={{ color: 'var(--muted)' }} onClick={() => publishCard(p.id)}>
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                              )}
                               <button className="ico-btn" title="Edit Product" onClick={() => openProductModal(p)}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
                               </button>
@@ -637,6 +724,15 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
                         <div className="prod-foot">
                           <span className={`tag ${sc}`}><span className="dot" />{st}</span>
                           <div className="row-act">
+                            {getProductCard(p.id) ? (
+                              <button className="ico-btn" title="Hide Card" style={{ color: 'var(--rose)' }} onClick={() => unpublishCard(p.id)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                              </button>
+                            ) : (
+                              <button className="ico-btn" title="Show Card" onClick={() => publishCard(p.id)}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                              </button>
+                            )}
                             <button className="ico-btn" onClick={() => openProductModal(p)}>
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
                             </button>
@@ -653,6 +749,112 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
             )}
           </>
         )}
+      </section>
+
+      {/* ── CARDS ── */}
+      <section className={`page ${page === 'cards' ? 'active' : ''}`} id="page-cards">
+        <div className="page-head">
+          <div>
+            <h2>Cards &amp; Visibility</h2>
+            <p>All products — manage which ones are published (visible on the website)</p>
+          </div>
+        </div>
+        <div className="panel">
+          <div className="tbl-wrap">
+            <table className="aptbl">
+              <thead>
+                <tr>
+                  <th style={{ width: 80 }}>Card ID</th>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Product Status</th>
+                  <th>Card Status</th>
+                  <th style={{ width: 120, textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.length === 0 && (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
+                      No products yet. Add products from the Products page.
+                    </td>
+                  </tr>
+                )}
+                {products.map(prod => {
+                  const card = getProductCard(prod.id);
+                  const catData = cats.find(ct => ct.id === prod.cat) || { name: prod.cat, emoji: '📦' };
+                  return (
+                    <tr key={prod.id}>
+                      <td>
+                        {card
+                          ? <span className="t-id">#{card.id}</span>
+                          : <span style={{ color: 'var(--muted)', fontSize: 12 }}>—</span>
+                        }
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div className="cust-ava" style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 6,
+                            fontSize: 14,
+                            background: prod.img ? `url(${prod.img}) center/cover` : 'var(--sand)'
+                          }}>
+                            {!prod.img && catData.emoji}
+                          </div>
+                          <div>
+                            <span style={{ fontWeight: 500, color: 'var(--ink)' }}>{prod.name}</span>
+                            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)' }}>
+                              {prod.desc ? prod.desc.slice(0, 50) + (prod.desc.length > 50 ? '...' : '') : 'No description'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="tag mute" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          {catData.emoji} {catData.name}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`tag ${prod.status === 'Active' ? 'ok' : 'warn'}`}>
+                          <span className="dot" />{prod.status}
+                        </span>
+                      </td>
+                      <td>
+                        {card
+                          ? <span className="tag ok"><span className="dot" />Published</span>
+                          : <span className="tag mute" style={{ opacity: 0.6 }}>No Card</span>
+                        }
+                      </td>
+                      <td>
+                        <div className="row-act" style={{ justifyContent: 'flex-end' }}>
+                          {card ? (
+                            <button
+                              className="ico-btn del"
+                              title="Delete Card (product stays)"
+                              onClick={() => deleteCard(card.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                          ) : (
+                            <button
+                              className="ico-btn info"
+                              title="Publish Card"
+                              style={{ color: 'var(--muted)' }}
+                              onClick={() => publishCard(prod.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       {/* ── ORDERS ── */}
@@ -1024,12 +1226,18 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
         cats={cats}
         colsFor={colsFor}
         onSave={saveProduct}
+        onCreateCategory={addCategory}
+        onCreateSubcategory={addSubcategory}
         onClose={() => setProdModal({ show: false, data: null })}
       />
 
       {/* Category edit modal */}
       <Modal show={catModal.show} onClose={() => setCatModal({ show: false, data: null })} title="Edit Category"
-        footer={<><button className="btn btn-outline" onClick={() => setCatModal({ show: false, data: null })}>Cancel</button><button className="btn btn-primary" onClick={() => saveCat(catModal.data)}>Save Category</button></>}>
+        footer={<>
+          <button className="btn btn-danger" onClick={() => catModal.data && deleteCategory(catModal.data.id)}>Delete</button>
+          <button className="btn btn-outline" onClick={() => setCatModal({ show: false, data: null })}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => saveCat(catModal.data)}>Save Category</button>
+        </>}>
         {catModal.data && (
           <>
             <div className="field"><label>Category Image <small>shown in category cards</small></label>
@@ -1043,6 +1251,22 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
             <div className="field"><label>Emoji / Icon <small>fallback if no image</small></label><input className="inp" value={catModal.data.emoji||''} maxLength={4} style={{ width:90, textAlign:'center', fontSize:20 }} onChange={(e) => setCatModal(m => ({ ...m, data: { ...m.data, emoji: e.target.value } }))} /></div>
             <div className="field"><label>Category Name</label><input className="inp" value={catModal.data.name||''} onChange={(e) => setCatModal(m => ({ ...m, data: { ...m.data, name: e.target.value } }))} /></div>
             <div className="field mb-0"><label>Description</label><textarea className="inp" value={catModal.data.desc||''} onChange={(e) => setCatModal(m => ({ ...m, data: { ...m.data, desc: e.target.value } }))} /></div>
+            {Array.isArray(catModal.data.subcategories) && catModal.data.subcategories.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <label>Subcategories</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  {catModal.data.subcategories.map(s => (
+                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <div style={{ fontSize: 14 }}>{s.name} <small style={{ color: 'var(--muted)', marginLeft: 8 }}>{s.id}</small></div>
+                      <div>
+                        <button className="btn btn-outline btn-sm" onClick={() => setCatModal(m => ({ ...m, data: { ...m.data, subToEdit: s } }))}>Edit</button>
+                        <button className="btn btn-danger btn-sm" style={{ marginLeft: 8 }} onClick={() => deleteSubcategory(catModal.data.id, s.id)}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </Modal>
@@ -1092,26 +1316,102 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
 }
 
 /* ── Product Form Modal ── */
-function ProductModal({ show, data, cats, colsFor, onSave, onClose }) {
+function ProductModal({ show, data, cats, colsFor, onSave, onCreateCategory, onCreateSubcategory, onClose }) {
   const [form, setForm] = useState(data || {})
+  const [showCreateCategory, setShowCreateCategory] = useState(false)
+  const [newCategory, setNewCategory] = useState({ id: '', name: '', emoji: '📦', desc: '' })
+  const [showCreateSubcategory, setShowCreateSubcategory] = useState(false)
+  const [newSubcategory, setNewSubcategory] = useState({ id: '', name: '', desc: '' })
+
   useEffect(() => { if (data) setForm(data) }, [data])
   if (!data) return null
+
+  const selectedCategory = cats.find((c) => c.id === form.cat) || null
   const catCols = colsFor(form.cat || cats[0]?.id || '')
+  const selectedSubcats = selectedCategory?.subcategories || []
+
   const handleCatChange = (catId) => {
     const cols = colsFor(catId)
     const specs = {}
-    cols.forEach(c => { specs[c.key] = form.specs?.[c.key] ?? '—' })
-    setForm(f => ({ ...f, cat: catId, specs }))
+    cols.forEach((c) => { specs[c.key] = form.specs?.[c.key] ?? '—' })
+    setForm((f) => ({ ...f, cat: catId, subcat: '', specs }))
   }
+
+  const createCategoryNow = () => {
+    const created = onCreateCategory?.({ ...newCategory })
+    if (created) {
+      setForm((f) => ({ ...f, cat: created.id, subcat: '' }))
+      setShowCreateCategory(false)
+      setNewCategory({ id: '', name: '', emoji: '📦', desc: '' })
+    }
+  }
+
+  const createSubcategoryNow = () => {
+    const created = onCreateSubcategory?.(form.cat, { ...newSubcategory })
+    if (created) {
+      setForm((f) => ({ ...f, subcat: created.id }))
+      setShowCreateSubcategory(false)
+      setNewSubcategory({ id: '', name: '', desc: '' })
+    }
+  }
+
   return (
     <Modal show={show} onClose={onClose} title={data.id ? 'Edit Product' : 'Add Product'}
       footer={<><button className="btn btn-outline" onClick={onClose}>Cancel</button><button className="btn btn-primary" onClick={() => { if (!form.name?.trim()) return; onSave(form) }}>Save Product</button></>}>
       <div className="field"><label>Product Name</label><input className="inp" value={form.name||''} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Fine Edible Salt 1kg" /></div>
-      <div className="field"><label>Category</label>
-        <select className="inp" value={form.cat||''} onChange={(e) => handleCatChange(e.target.value)}>
-          {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+
+      <div className="field">
+        <label>Category</label>
+        <div className="field-row" style={{ gap: 10 }}>
+          <select className="inp" value={form.cat||''} onChange={(e) => handleCatChange(e.target.value)} style={{ flex: 1 }}>
+            <option value="">— choose or create a category —</option>
+            {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <button className="btn btn-outline" type="button" onClick={() => setShowCreateCategory((v) => !v)}>New Category</button>
+        </div>
+        {showCreateCategory && (
+          <div className="field-row" style={{ marginTop: 10, gap: 10 }}>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Slug</label>
+              <input className="inp" value={newCategory.id} onChange={(e) => setNewCategory((f) => ({ ...f, id: e.target.value }))} placeholder="edible-salt" />
+            </div>
+            <div className="field" style={{ flex: 2 }}>
+              <label>Name</label>
+              <input className="inp" value={newCategory.name} onChange={(e) => setNewCategory((f) => ({ ...f, name: e.target.value }))} placeholder="Edible Salt" />
+            </div>
+            <div className="field" style={{ width: 90 }}>
+              <label>Icon</label>
+              <input className="inp" value={newCategory.emoji} maxLength={4} onChange={(e) => setNewCategory((f) => ({ ...f, emoji: e.target.value }))} />
+            </div>
+            <button className="btn btn-primary" type="button" onClick={createCategoryNow}>Add</button>
+          </div>
+        )}
       </div>
+
+      <div className="field">
+        <label>Subcategory</label>
+        <div className="field-row" style={{ gap: 10 }}>
+          <select className="inp" value={form.subcat || ''} onChange={(e) => setForm((f) => ({ ...f, subcat: e.target.value }))} style={{ flex: 1 }} disabled={!form.cat}>
+            <option value="">— none —</option>
+            {selectedSubcats.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <button className="btn btn-outline" type="button" onClick={() => setShowCreateSubcategory((v) => !v)} disabled={!form.cat}>New Subcategory</button>
+        </div>
+        {showCreateSubcategory && form.cat && (
+          <div className="field-row" style={{ marginTop: 10, gap: 10 }}>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Slug</label>
+              <input className="inp" value={newSubcategory.id} onChange={(e) => setNewSubcategory((f) => ({ ...f, id: e.target.value }))} placeholder="bulk" />
+            </div>
+            <div className="field" style={{ flex: 2 }}>
+              <label>Name</label>
+              <input className="inp" value={newSubcategory.name} onChange={(e) => setNewSubcategory((f) => ({ ...f, name: e.target.value }))} placeholder="Bulk Salt" />
+            </div>
+            <button className="btn btn-primary" type="button" onClick={createSubcategoryNow}>Add</button>
+          </div>
+        )}
+      </div>
+
       <div className="field"><label>Product Image</label>
         <ImgUpload img={form.img} onImg={(img) => setForm(f => ({ ...f, img }))} onRemove={() => setForm(f => ({ ...f, img:'' }))} phEmoji={cats.find(c => c.id === form.cat)?.emoji || '🧂'} />
       </div>
@@ -1132,6 +1432,15 @@ function ProductModal({ show, data, cats, colsFor, onSave, onClose }) {
         </select>
       </div>
       <div className="field mb-0"><label>Tags <small>comma separated</small></label><input className="inp" value={form.tags||''} onChange={(e) => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="export, food-grade, bulk" /></div>
+      <div className="field" style={{ marginTop: 8 }}>
+        <label>Show In Cards</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input type="checkbox" checked={form.showInCard !== false} onChange={(e) => setForm(f => ({ ...f, showInCard: e.target.checked }))} />
+            <span style={{ color: 'var(--muted)' }}>When checked, product appears as a card on the public category page; when unchecked it appears only in the table list.</span>
+          </label>
+        </div>
+      </div>
     </Modal>
   )
 }

@@ -1,5 +1,5 @@
 // Central API service for Bin Aouf backend
-const API = import.meta.env.VITE_API_URL || 'https://binaouf-backend.vercel.app/api'
+const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://binaouf-backend.vercel.app/api')
 
 // Auth token helpers
 const Auth = {
@@ -50,6 +50,7 @@ export const api = {
 
   // Admin
   getProducts: () => request('/admin/products'),
+  getCards: () => request('/admin/cards'),
   getCategories: () => request('/admin/categories'),
   getOrders: () => request('/admin/orders'),
   getCustomers: () => request('/admin/customers'),
@@ -61,6 +62,14 @@ export const api = {
   getProductColumns: () => request('/admin/product-columns'),
   bulkPush: (endpoint, data) =>
     request('/admin/bulk/' + endpoint, { method: 'PUT', body: data }),
+
+  // Card-specific direct calls (do NOT use bulkPush for cards — race condition risk)
+  publishCard: (productId) =>
+    request(`/admin/products/${productId}/publish-card`, { method: 'POST' }),
+  unpublishCard: (productId) =>
+    request(`/admin/products/${productId}/publish-card`, { method: 'DELETE' }),
+  deleteCard: (cardId) =>
+    request(`/admin/cards/${cardId}`, { method: 'DELETE' }),
 }
 
 export { API }

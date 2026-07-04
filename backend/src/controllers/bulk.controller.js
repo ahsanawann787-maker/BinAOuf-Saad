@@ -1,11 +1,20 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
+import { Card } from '../models/Card.js';
+import { nextSeq } from '../utils/counter.js';
 
 /**
  * Replace an entire collection with the supplied array (idempotent).
  * Matches the admin panel's "mutate array locally, then persist the whole
  * collection" model. Upserts every item by its `id`, deletes the rest.
  * No wipe window — safe even if a write fails midway.
+ *
+ * Card lifecycle (intentional design):
+ *  - Auto-created when a NEW Product is added via bulk (first sync after add).
+ *  - Deleted via DELETE /admin/cards/:id  →  only the card, product untouched.
+ *  - Deleted automatically when its Product is deleted (crudFactory remove).
+ *  - Re-published via POST /admin/products/:id/publish-card.
+ *  - Cards are NEVER auto-deleted here — only explicit card-delete API removes them.
  */
 export function bulkReplace(Model) {
   return asyncHandler(async (req, res) => {
@@ -17,6 +26,15 @@ export function bulkReplace(Model) {
     if (missing !== -1) throw ApiError.badRequest(`Item at index ${missing} is missing an "id"`);
 
     const ids = items.map((i) => i.id);
+
+    // For Products: capture existing IDs before the write so we can detect truly new products
+    const isProduct = Model.modelName === 'Product';
+    let existingIds = [];
+    if (isProduct) {
+      const existing = await Model.find({}, { id: 1 }).lean();
+      existingIds = existing.map((p) => p.id);
+    }
+
     if (items.length) {
       await Model.bulkWrite(
         items.map((i) => ({
@@ -26,6 +44,20 @@ export function bulkReplace(Model) {
       );
     }
     await Model.deleteMany({ id: { $nin: ids } });
+
+    // Auto-create a card for every brand-new product (no card yet)
+    // We do NOT delete cards here — card deletion is explicit via the card API only.
+    if (isProduct) {
+      const newProducts = await Model.find({ id: { $nin: existingIds } }).lean();
+      for (const p of newProducts) {
+        const cardExists = await Card.findOne({ productId: p.id });
+        if (!cardExists) {
+          const cardId = await nextSeq('card');
+          await Card.create({ id: cardId, productId: p.id, visible: true });
+        }
+      }
+    }
+
     const data = await Model.find().lean({ virtuals: true });
     res.json({ ok: true, count: data.length, data });
   });

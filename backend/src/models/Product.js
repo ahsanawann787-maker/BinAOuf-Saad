@@ -5,6 +5,7 @@ const productSchema = new mongoose.Schema(
   {
     id: { type: Number, required: true, unique: true, index: true },
     cat: { type: String, required: true, index: true }, // category slug
+    subcat: { type: String, default: '', index: true }, // subcategory slug
     name: { type: String, required: true, trim: true },
     desc: { type: String, default: '' },
     tags: { type: String, default: '' },

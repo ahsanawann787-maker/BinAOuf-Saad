@@ -99,3 +99,9 @@ export const columnsSchema = z.object({
 });
 
 export const settingsSchema = z.record(z.string(), z.any());
+
+export const cardSchema = z.object({
+  productId: z.number().int(),
+  visible: z.boolean().optional().default(true),
+});
+export const cardUpdateSchema = cardSchema.partial();

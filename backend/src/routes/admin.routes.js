@@ -10,9 +10,11 @@ import {
   orderSchema, orderUpdateSchema,
   customerSchema, customerUpdateSchema,
   inquiryUpdateSchema, columnsSchema, settingsSchema,
+  cardSchema, cardUpdateSchema,
 } from '../validators/schemas.js';
 import {
-  productCtrl, categoryCtrl, homeCatCtrl, certCtrl, orderCtrl, customerCtrl,
+  productCtrl, categoryCtrl, homeCatCtrl, certCtrl, orderCtrl, customerCtrl, cardCtrl,
+  publishCard, unpublishCard,
 } from '../controllers/resources.js';
 import { listInquiries, updateInquiry, deleteInquiry } from '../controllers/inquiry.controller.js';
 import { getSettings, updateSettings } from '../controllers/settings.controller.js';
@@ -28,6 +30,7 @@ import { Order } from '../models/Order.js';
 import { Customer } from '../models/Customer.js';
 import { Inquiry } from '../models/Inquiry.js';
 import { ProductColumns } from '../models/ProductColumns.js';
+import { Card } from '../models/Card.js';
 
 const r = Router();
 r.use(requireAuth); // everything below requires a valid admin token
@@ -43,6 +46,10 @@ function resource(path, ctrl, createSchema, updateSchema, { idNum = true } = {})
 }
 
 resource('products', productCtrl, productSchema, productUpdateSchema);
+// Card publish/unpublish — operate only on the Card, never the Product
+r.post('/products/:id(\\d+)/publish-card', publishCard);
+r.delete('/products/:id(\\d+)/publish-card', unpublishCard);
+resource('cards', cardCtrl, cardSchema, cardUpdateSchema);
 resource('home-categories', homeCatCtrl, homeCatSchema, homeCatUpdateSchema);
 resource('certifications', certCtrl, certSchema, certUpdateSchema);
 resource('customers', customerCtrl, customerSchema, customerUpdateSchema);
@@ -72,6 +79,7 @@ r.post('/upload', upload.single('file'), uploadImage);
 // ── Bulk replace (matches the admin panel's whole-collection persist) ──
 // Body: an array, or { items: [...] }. Upserts by id, deletes the rest.
 r.put('/bulk/products', bulkReplace(Product));
+r.put('/bulk/cards', bulkReplace(Card));
 r.put('/bulk/categories', bulkReplace(Category));
 r.put('/bulk/home-categories', bulkReplace(HomeCat));
 r.put('/bulk/certifications', bulkReplace(Cert));

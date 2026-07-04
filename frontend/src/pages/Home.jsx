@@ -77,7 +77,7 @@ export default function Home() {
     setSlideIdx((i) => (i + dir + SLIDES.length) % SLIDES.length)
   }
 
-  const navToProducts = (tab) => navigate('/products', { state: { tab } })
+  const navToProducts = (tab) => navigate(`/products/${tab}`)
 
   return (
     <div id="page-home" className="page active">

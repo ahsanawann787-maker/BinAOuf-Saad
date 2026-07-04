@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
 import api, { API } from '../services/api'
 import pinkTiles from '../assets/images/pink_salt_tiles.jpg'
@@ -26,9 +26,9 @@ function getImageUrl(img) {
   return `${base}${img.startsWith('/') ? '' : '/'}${img}`;
 }
 
-function ProductItem({ item, idx, navigate }) {
+function ProductItem({ item, idx, navigate, onSelect }) {
   const grad = GRADS[idx % GRADS.length];
-  
+
   // High-fidelity fallback for seeded demo items
   let displayImg = getImageUrl(item.img);
   if (!displayImg) {
@@ -41,7 +41,18 @@ function ProductItem({ item, idx, navigate }) {
     : `linear-gradient(155deg,#${grad})`;
 
   return (
-    <div className="prod-item reveal">
+    <div
+      className="prod-item reveal"
+      onClick={() => onSelect(item)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect(item)
+        }
+      }}
+    >
       <div className="prod-item-img" style={{ background: bg }} />
       <div className="prod-item-body">
         <div className="prod-item-name">{item.name}</div>
@@ -49,7 +60,48 @@ function ProductItem({ item, idx, navigate }) {
           {item.desc || 'Premium quality Himalayan salt product.'}
         </div>
         <div className="prod-item-cta">
-          <button onClick={() => navigate('/contact')}>Get Quote →</button>
+          <button onClick={(e) => { e.stopPropagation(); navigate('/contact') }}>Get Quote →</button>
+          <button className="prod-item-view" onClick={(e) => { e.stopPropagation(); onSelect(item) }}>View Details</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ProductDetailModal({ product, onClose, navigate }) {
+  if (!product) return null
+
+  let displayImg = getImageUrl(product.img)
+  if (!displayImg) {
+    if (product.name?.includes('Pink Salt Tiles')) displayImg = pinkTiles
+    if (product.name?.includes('Cooking Slab')) displayImg = cookingSlab
+  }
+
+  const specs = Object.entries(product.specs || {}).filter(([, value]) => {
+    const text = String(value ?? '').trim()
+    return text && text !== '—' && text !== '-'
+  })
+
+  return (
+    <div className="product-detail-backdrop" onClick={onClose}>
+      <div className="product-detail-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="product-detail-close" onClick={onClose} aria-label="Close product details">×</button>
+        <div className="product-detail-media" style={{ backgroundImage: displayImg ? `url(${displayImg})` : 'linear-gradient(155deg,#e8c0a0,#c07050)' }} />
+        <div className="product-detail-body">
+          <div className="tag">Product Details</div>
+          <h3>{product.name}</h3>
+          <p>{product.desc || 'Premium quality Himalayan salt product crafted for demanding wholesale and private-label buyers.'}</p>
+          {specs.length > 0 && (
+            <div className="product-detail-specs">
+              {specs.map(([key, value]) => (
+                <div className="product-detail-spec" key={key}>
+                  <strong>{key}</strong>
+                  <span>{value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="btn-primary" onClick={() => navigate('/contact')}>Request a Quote</button>
         </div>
       </div>
     </div>
@@ -74,13 +126,16 @@ function OnDemand() {
 export default function Products() {
   const location = useLocation()
   const navigate = useNavigate()
-  
+  const { categoryId } = useParams()
+
   const [categories, setCategories] = useState([])
   const [products, setProducts] = useState([])
   const [activeTab, setActiveTab] = useState('edible')
+  const [selectedSubcat, setSelectedSubcat] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  
+  const [selectedProduct, setSelectedProduct] = useState(null)
+
   useReveal()
 
   const mapTabId = (id) => {
@@ -88,6 +143,12 @@ export default function Products() {
     if (id === 'candles') return 'candle';
     if (id === 'rocksalt') return 'rock';
     return id;
+  }
+
+  const selectCategory = (id) => {
+    const normalized = mapTabId(id)
+    setActiveTab(normalized)
+    navigate(`/products/${normalized}`)
   }
 
   useEffect(() => {
@@ -101,10 +162,11 @@ export default function Products() {
         if (active) {
           if (catsRes?.data) {
             setCategories(catsRes.data)
-            // Default activeTab to the first category if available
-            if (catsRes.data.length > 0) {
-              setActiveTab(catsRes.data[0].id)
-            }
+            const requested = categoryId ? mapTabId(categoryId) : location.state?.tab ? mapTabId(location.state.tab) : null
+            const fallback = requested && catsRes.data.some((c) => c.id === requested)
+              ? requested
+              : catsRes.data[0]?.id
+            setActiveTab(fallback)
           }
           if (prodsRes?.data) {
             setProducts(prodsRes.data)
@@ -121,13 +183,26 @@ export default function Products() {
     }
     loadData()
     return () => { active = false }
-  }, [])
+  }, [categoryId, location.state])
 
   useEffect(() => {
-    if (location.state?.tab) {
-      setActiveTab(mapTabId(location.state.tab))
+    if (!categories.length) return
+    const requested = categoryId ? mapTabId(categoryId) : null
+    const fallback = requested && categories.some((c) => c.id === requested)
+      ? requested
+      : activeTab
+    if (fallback !== activeTab) {
+      setActiveTab(fallback)
     }
-  }, [location.state, categories])
+    setSelectedProduct(null)
+  }, [categories, categoryId, activeTab])
+
+  useEffect(() => {
+    if (!categories.length) return
+    const current = categories.find(c => c.id === (categoryId ? mapTabId(categoryId) : activeTab)) || categories[0]
+    const firstSub = current?.subcategories?.[0]?.id || ''
+    setSelectedSubcat(firstSub)
+  }, [categoryId, categories])
 
   // Re-run reveal when tab changes
   useEffect(() => {
@@ -142,7 +217,7 @@ export default function Products() {
       })
     }, 80)
     return () => clearTimeout(t)
-  }, [activeTab, loading])
+  }, [activeTab, selectedSubcat, loading])
 
   if (loading) {
     return (
@@ -161,13 +236,53 @@ export default function Products() {
     )
   }
 
+  const normalizeSubcat = (value) => {
+    if (value === null || value === undefined || value === '') return ''
+    return String(value)
+      .trim()
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+  }
+
+  const isCardVisible = (p) => {
+    // Undefined = legacy behavior -> show in cards
+    if (p.showInCard === undefined) return true
+    // Null or explicit null -> do not show
+    if (p.showInCard === null) return false
+    // Strings like 'false' should be treated as false
+    if (typeof p.showInCard === 'string') {
+      const v = p.showInCard.trim().toLowerCase()
+      if (v === 'false' || v === '0' || v === 'no') return false
+      if (v === 'true' || v === '1' || v === 'yes') return true
+    }
+    return Boolean(p.showInCard)
+  }
+
   const currentCat = categories.find(c => c.id === activeTab) || categories[0]
   const catIndex = categories.findIndex(c => c.id === currentCat.id)
   const catGrad = GRADS[catIndex % GRADS.length]
   const activeProducts = products.filter(p => p.cat === currentCat.id)
+  const currentSubcats = currentCat?.subcategories || []
+  const filteredBySubcat = activeProducts.filter((p) => {
+    // If no subcategories defined for this category, show all active products
+    if (!currentSubcats.length) return true
+
+    const productSubcat = normalizeSubcat(p.subcat || p.subCategory || p.subcategory || p.categorySubcat)
+    const selectedValue = normalizeSubcat(selectedSubcat)
+
+    if (!productSubcat) return false
+    return productSubcat === selectedValue
+  })
+
+  // Cards should only show products explicitly allowed for card view. Existing products without the flag default to visible in cards.
+  const visibleProducts = filteredBySubcat.filter((p) => isCardVisible(p))
+  // Table shows all filtered products (both card + table-only)
+  const tableProducts = filteredBySubcat
 
   // Dynamically determine table columns based on specifications populated in active products
-  const hasSpec = (key) => activeProducts.some(p => p.specs?.[key] && p.specs[key] !== '—' && p.specs[key] !== '-')
+  const hasSpec = (key) => visibleProducts.some(p => p.specs?.[key] && p.specs[key] !== '—' && p.specs[key] !== '-')
 
   return (
     <div id="page-products" className="page active">
@@ -185,7 +300,7 @@ export default function Products() {
             <button
               key={c.id}
               className={`prod-tab ${currentCat.id === c.id ? 'active' : ''}`}
-              onClick={() => { setActiveTab(c.id) }}
+              onClick={() => selectCategory(c.id)}
             >
               {c.emoji} {c.name}
             </button>
@@ -212,15 +327,29 @@ export default function Products() {
               } />
           </div>
 
-          {activeProducts.length === 0 ? (
+          {currentSubcats.length > 0 && (
+            <div className="prod-subcat-filter reveal">
+              {currentSubcats.map((sub) => (
+                <button
+                  key={sub.id}
+                  className={`prod-subcat-pill ${selectedSubcat === sub.id ? 'active' : ''}`}
+                  onClick={() => setSelectedSubcat(sub.id)}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {visibleProducts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)', fontWeight: 300 }}>
               No products found in this category. Use the Admin Panel to add them!
             </div>
           ) : (
             <>
               <div className="prod-items-grid">
-                {activeProducts.map((product, i) => (
-                  <ProductItem key={product.id || i} item={product} idx={i} navigate={navigate} />
+                {visibleProducts.map((product, i) => (
+                  <ProductItem key={product.id || i} item={product} idx={i} navigate={navigate} onSelect={setSelectedProduct} />
                 ))}
               </div>
 
@@ -235,11 +364,11 @@ export default function Products() {
                       {hasSpec('weight') && <th>Weight (kg)</th>}
                       {hasSpec('size') && <th>Size / Grade</th>}
                       {hasSpec('packing') && <th>Packaging</th>}
-                      <th>Price</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {activeProducts.map((product) => (
+                    {tableProducts.map((product) => (
                       <tr key={product.id}>
                         <td>{product.name}</td>
                         {hasSpec('art') && <td>{product.specs?.art || '—'}</td>}
@@ -258,6 +387,14 @@ export default function Products() {
           )}
         </div>
       </div>
+
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          navigate={navigate}
+        />
+      )}
     </div>
   )
 }

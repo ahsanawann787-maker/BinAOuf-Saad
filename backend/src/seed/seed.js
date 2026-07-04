@@ -10,6 +10,7 @@ import { Inquiry } from '../models/Inquiry.js';
 import { ProductColumns } from '../models/ProductColumns.js';
 import { Settings } from '../models/Settings.js';
 import { AdminUser } from '../models/AdminUser.js';
+import { Card } from '../models/Card.js';
 import { ensureCounter } from '../utils/counter.js';
 import {
   SEED_CATS, SEED_PRODUCTS, SEED_HOMECATS, SEED_CERTS,
@@ -42,7 +43,7 @@ async function run() {
 
   if (FRESH) {
     await Promise.all([
-      Category.deleteMany({}), Product.deleteMany({}), HomeCat.deleteMany({}),
+      Category.deleteMany({}), Product.deleteMany({}), Card.deleteMany({}), HomeCat.deleteMany({}),
       Cert.deleteMany({}), Order.deleteMany({}), Customer.deleteMany({}),
       Inquiry.deleteMany({}), ProductColumns.deleteMany({}),
     ]);
@@ -56,6 +57,13 @@ async function run() {
   const orders = await upsertMany(Order, SEED_ORDERS);
   const custs = await upsertMany(Customer, SEED_CUSTOMERS);
   const inq = await upsertMany(Inquiry, SEED_INQ);
+
+  const cardsToInsert = SEED_PRODUCTS.map((p, idx) => ({
+    id: idx + 1,
+    productId: p.id,
+    visible: true
+  }));
+  const cards = await upsertMany(Card, cardsToInsert);
 
   // Per-category default columns (one doc per category).
   for (const c of SEED_CATS) {
@@ -73,6 +81,7 @@ async function run() {
   await ensureCounter('cert', maxNum(SEED_CERTS));
   await ensureCounter('customer', maxNum(SEED_CUSTOMERS));
   await ensureCounter('inquiry', maxNum(SEED_INQ));
+  await ensureCounter('card', maxNum(cardsToInsert));
   const maxOrder = SEED_ORDERS.reduce((m, o) => Math.max(m, Number(String(o.id).replace('BA-', '')) || 0), 0);
   await ensureCounter('order', maxOrder);
 
@@ -113,6 +122,7 @@ async function run() {
   console.log('   ✔ orders          ', orders);
   console.log('   ✔ customers       ', custs);
   console.log('   ✔ inquiries       ', inq);
+  console.log('   ✔ cards           ', cards);
   console.log('   ✔ product-columns  seeded for', SEED_CATS.length, 'categories');
   console.log('   ✔ settings + admin user ready');
   console.log(`\n🔑 Admin login → ${env.admin.email} / (ADMIN_PASSWORD from .env)\n`);
