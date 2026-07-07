@@ -8,6 +8,8 @@ import { Cert } from '../models/Cert.js';
 import { Order } from '../models/Order.js';
 import { Customer } from '../models/Customer.js';
 import { Card } from '../models/Card.js';
+import { FAQ } from '../models/FAQ.js';
+import { Blog } from '../models/Blog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 
@@ -126,4 +128,25 @@ export const unpublishCard = asyncHandler(async (req, res) => {
   const card = await Card.findOneAndDelete({ productId });
   // No error if card doesn't exist — idempotent
   res.json({ ok: true, data: { productId, cardDeleted: !!card } });
+});
+
+export const faqCtrl = crudController({
+  Model: FAQ,
+  genId: () => nextSeq('faq'),
+  defaultSort: { displayOrder: 1, id: 1 },
+});
+
+export const blogCtrl = crudController({
+  Model: Blog,
+  genId: () => nextSeq('blog'),
+  defaultSort: { createdAt: -1 },
+  transform: (body) => {
+    if (!body.slug && body.title) {
+      body.slug = body.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+    return body;
+  },
 });

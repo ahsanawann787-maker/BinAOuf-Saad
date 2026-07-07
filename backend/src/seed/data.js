@@ -96,3 +96,39 @@ export const DEFAULT_COLS = [
   { key: 'size', label: 'Size (cm)' },
   { key: 'packing', label: 'Packing' },
 ];
+
+export const SEED_FAQS = [
+  { id: 1, question: 'Where is your Himalayan salt sourced from?', answer: 'All our Himalayan salt is sourced directly from the historic Khewra Salt Mine in Punjab, Pakistan (the second largest salt mine in the world), as well as Warcha and Kalabagh mines, ensuring authentic and premium quality mineral salt.', displayOrder: 1, isActive: true },
+  { id: 2, question: 'What is your minimum order quantity (MOQ) for exports?', answer: 'Our standard MOQ is one 20ft container load (typically 18 to 25 tons depending on packaging). However, we also offer mixed containers where you can combine different product categories (e.g. edible salt, animal lick blocks, and lamps) in a single shipment.', displayOrder: 2, isActive: true },
+  { id: 3, question: 'Do you offer private labeling and custom packaging?', answer: 'Yes, we specialize in private labeling. We can pack edible salt, bath salts, and lamps in custom-branded retail boxes, bags, jars, or grinders with your design and brand identity.', displayOrder: 3, isActive: true },
+  { id: 4, question: 'Are your edible salt products certified?', answer: 'Yes, all our food-grade salt products are certified by ISO 22000, Halal certified, and compliant with US FDA regulations, meeting strict global food safety standards.', displayOrder: 4, isActive: true },
+  { id: 5, question: 'Do you offer product samples before bulk orders?', answer: 'Yes, we offer sample packs for all our product categories. Samples are typically dispatched via DHL or FedEx within 3-5 business days. The cost of samples is fully refundable on your first bulk container order.', displayOrder: 5, isActive: true }
+];
+
+export const SEED_BLOGS = [
+  {
+    id: 1,
+    title: 'The Health Benefits of Himalayan Pink Salt vs Table Salt',
+    slug: 'health-benefits-himalayan-pink-salt-vs-table-salt',
+    excerpt: 'Discover why culinary experts and health enthusiasts prefer raw Himalayan pink salt over processed table salt, and how it retains its mineral-rich benefits.',
+    content: '<p>Himalayan pink salt is harvested from the Khewra Salt Mine in Pakistan. Unlike regular table salt, which is heavily processed and stripped of its natural minerals, pink salt is unrefined and contains over 84 trace minerals, including iron, magnesium, and potassium. These minerals give it its characteristic pink color and provide a range of health benefits.</p><h3>Why it\'s better than table salt:</h3><ul><li><b>Rich in trace minerals:</b> Retains its natural composition.</li><li><b>Fewer additives:</b> Contains no anti-caking agents or chemicals.</li><li><b>Better hydration:</b> Promotes electrolyte balance.</li></ul>',
+    category: 'Health & Wellness',
+    tags: 'pink salt, health, wellness',
+    metaTitle: 'Himalayan Pink Salt vs Table Salt: Health Benefits',
+    metaDescription: 'Learn about the health benefits of Himalayan pink salt vs processed table salt. Discover its trace minerals and why it is the healthier choice.',
+    isPublished: true
+  },
+  {
+    id: 2,
+    title: 'The Complete Guide to Decorating with Himalayan Salt Lamps',
+    slug: 'decorating-with-himalayan-salt-lamps',
+    excerpt: 'Transform your living space with the warm, therapeutic amber glow of hand-carved Himalayan salt lamps. Learn how to style and care for them.',
+    content: '<p>Himalayan salt lamps are more than just beautiful light fixtures; they are natural air purifiers and wellness accessories. Made from solid blocks of pink salt with a small light bulb inside, they emit a soft, amber glow that mimics firelight. In this guide, we will explore the best places to position your salt lamps and how to take care of them.</p><h3>Top locations for salt lamps:</h3><ol><li><b>Bedrooms:</b> The warm glow is perfect as a nightlight that does not disrupt sleep patterns.</li><li><b>Living Rooms:</b> Position near electronics to neutralize positive ions.</li><li><b>Home Offices:</b> Enhances productivity and reduces ambient stress.</li></ol>',
+    category: 'Home Decor',
+    tags: 'salt lamps, home decor, wellness',
+    metaTitle: 'Himalayan Salt Lamps Decoration Guide & Care',
+    metaDescription: 'How to decorate your home with natural hand-carved Himalayan salt lamps. Learn styling tips, placement, and proper care instructions.',
+    isPublished: true
+  }
+];
+

@@ -20,6 +20,8 @@ export default function Navbar() {
     { label: 'Products', path: '/products' },
     { label: 'About Us', path: '/about' },
     { label: 'Process', path: '/process' },
+    { label: 'Blogs', path: '/blogs' },
+    { label: 'FAQ', path: '/faq' },
     { label: 'Contact', path: '/contact' },
   ]
 

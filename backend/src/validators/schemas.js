@@ -105,3 +105,26 @@ export const cardSchema = z.object({
   visible: z.boolean().optional().default(true),
 });
 export const cardUpdateSchema = cardSchema.partial();
+
+export const faqSchema = z.object({
+  question: str(1000),
+  answer: str(5000),
+  displayOrder: z.number().int().optional().default(0),
+  isActive: z.boolean().optional().default(true),
+});
+export const faqUpdateSchema = faqSchema.partial();
+
+export const blogSchema = z.object({
+  title: str(300),
+  slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, 'slug: a-z, 0-9, dashes only').optional(),
+  excerpt: str(1000).optional().default(''),
+  content: z.string().trim(),
+  featuredImage: z.string().trim().optional().default(''),
+  category: str(100),
+  tags: str(300).optional().default(''),
+  metaTitle: str(200).optional().default(''),
+  metaDescription: str(500).optional().default(''),
+  isPublished: z.boolean().optional().default(true),
+});
+export const blogUpdateSchema = blogSchema.partial();
+

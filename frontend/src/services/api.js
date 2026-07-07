@@ -1,5 +1,5 @@
 // Central API service for Bin Aouf backend
-const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://binaouf-backend.vercel.app/api')
+export const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://binaouf-backend.vercel.app/api')
 
 // Auth token helpers
 const Auth = {
@@ -47,6 +47,9 @@ export const api = {
   getPublicHomeCategories: () => request('/public/home-categories'),
   getPublicCertifications: () => request('/public/certifications'),
   getPublicSettings: () => request('/public/settings'),
+  getPublicFaqs: () => request('/public/faqs'),
+  getPublicBlogs: (page = 1, limit = 12) => request(`/public/blogs?page=${page}&limit=${limit}`),
+  getPublicBlogBySlug: (slug) => request(`/public/blogs/${slug}`),
 
   // Admin
   getProducts: () => request('/admin/products'),
@@ -60,6 +63,8 @@ export const api = {
   getHomeCategories: () => request('/admin/home-categories'),
   getCertifications: () => request('/admin/certifications'),
   getProductColumns: () => request('/admin/product-columns'),
+  getFaqs: () => request('/admin/faqs'),
+  getBlogs: () => request('/admin/blogs'),
   bulkPush: (endpoint, data) =>
     request('/admin/bulk/' + endpoint, { method: 'PUT', body: data }),
 
@@ -72,5 +77,4 @@ export const api = {
     request(`/admin/cards/${cardId}`, { method: 'DELETE' }),
 }
 
-export { API }
 export default api

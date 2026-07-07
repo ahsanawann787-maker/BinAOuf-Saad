@@ -11,10 +11,13 @@ import { ProductColumns } from '../models/ProductColumns.js';
 import { Settings } from '../models/Settings.js';
 import { AdminUser } from '../models/AdminUser.js';
 import { Card } from '../models/Card.js';
+import { FAQ } from '../models/FAQ.js';
+import { Blog } from '../models/Blog.js';
 import { ensureCounter } from '../utils/counter.js';
 import {
   SEED_CATS, SEED_PRODUCTS, SEED_HOMECATS, SEED_CERTS,
   SEED_ORDERS, SEED_CUSTOMERS, SEED_INQ, DEFAULT_COLS,
+  SEED_FAQS, SEED_BLOGS,
 } from './data.js';
 
 const FRESH = process.argv.includes('--fresh');
@@ -46,6 +49,7 @@ async function run() {
       Category.deleteMany({}), Product.deleteMany({}), Card.deleteMany({}), HomeCat.deleteMany({}),
       Cert.deleteMany({}), Order.deleteMany({}), Customer.deleteMany({}),
       Inquiry.deleteMany({}), ProductColumns.deleteMany({}),
+      FAQ.deleteMany({}), Blog.deleteMany({}),
     ]);
     console.log('   ✔ content collections cleared');
   }
@@ -57,6 +61,8 @@ async function run() {
   const orders = await upsertMany(Order, SEED_ORDERS);
   const custs = await upsertMany(Customer, SEED_CUSTOMERS);
   const inq = await upsertMany(Inquiry, SEED_INQ);
+  const faqs = await upsertMany(FAQ, SEED_FAQS);
+  const blogs = await upsertMany(Blog, SEED_BLOGS);
 
   const cardsToInsert = SEED_PRODUCTS.map((p, idx) => ({
     id: idx + 1,
@@ -82,6 +88,8 @@ async function run() {
   await ensureCounter('customer', maxNum(SEED_CUSTOMERS));
   await ensureCounter('inquiry', maxNum(SEED_INQ));
   await ensureCounter('card', maxNum(cardsToInsert));
+  await ensureCounter('faq', maxNum(SEED_FAQS));
+  await ensureCounter('blog', maxNum(SEED_BLOGS));
   const maxOrder = SEED_ORDERS.reduce((m, o) => Math.max(m, Number(String(o.id).replace('BA-', '')) || 0), 0);
   await ensureCounter('order', maxOrder);
 
@@ -123,6 +131,8 @@ async function run() {
   console.log('   ✔ customers       ', custs);
   console.log('   ✔ inquiries       ', inq);
   console.log('   ✔ cards           ', cards);
+  console.log('   ✔ faqs            ', faqs);
+  console.log('   ✔ blogs           ', blogs);
   console.log('   ✔ product-columns  seeded for', SEED_CATS.length, 'categories');
   console.log('   ✔ settings + admin user ready');
   console.log(`\n🔑 Admin login → ${env.admin.email} / (ADMIN_PASSWORD from .env)\n`);

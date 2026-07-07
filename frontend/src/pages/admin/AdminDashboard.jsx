@@ -133,6 +133,8 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   const [orders, setOrders] = useState([])
   const [customers, setCustomers] = useState([])
   const [inquiries, setInquiries] = useState([])
+  const [faqs, setFaqs] = useState([])
+  const [blogs, setBlogs] = useState([])
   const [cols, setCols] = useState({})
   const [settings, setSettings] = useState({})
   const [loading, setLoading] = useState(true)
@@ -157,13 +159,15 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   useEffect(() => {
     const boot = async () => {
       try {
-        const [c, p, cardRes, h, ce, o, cu, inq, cl, s] = await Promise.all([
+        const [c, p, cardRes, h, ce, o, cu, inq, cl, s, fq, bl] = await Promise.all([
           api.getCategories(), api.getProducts(), api.getCards(),
           api.getHomeCategories(),
           api.getCertifications(),
           api.getOrders(), api.getCustomers(), api.getInquiries(),
           api.getProductColumns(),
-          api.getSettings()
+          api.getSettings(),
+          api.getFaqs(),
+          api.getBlogs()
         ])
         setCats(Array.isArray(c?.data) ? c.data : [])
         const ps = Array.isArray(p?.data) ? p.data : []
@@ -175,6 +179,8 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
         setOrders(Array.isArray(o?.data) ? o.data : [])
         setCustomers(Array.isArray(cu?.data) ? cu.data : [])
         setInquiries(Array.isArray(inq?.data) ? inq.data : [])
+        setFaqs(Array.isArray(fq?.data) ? fq.data : [])
+        setBlogs(Array.isArray(bl?.data) ? bl.data : [])
         setCols(cl?.data || {})
         setSettings(s?.data || {})
         setLoading(false)
@@ -207,6 +213,8 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   const syncHomecats = useDebounce((data) => api.bulkPush('home-categories', data), 600)
   const syncCerts = useDebounce((data) => api.bulkPush('certifications', data), 600)
   const syncCols = useDebounce((data) => api.bulkPush('product-columns', { map: data }), 600)
+  const syncFaqs = useDebounce((data) => api.bulkPush('faqs', data), 600)
+  const syncBlogs = useDebounce((data) => api.bulkPush('blogs', data), 600)
 
   /* ─── stats ─── */
   const unreadInq = inquiries.filter(i => !i.read && !i.archived).length
@@ -471,6 +479,51 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
     if (j < 0 || j >= certs.length) return
     const updated = [...certs]; [updated[idx], updated[j]] = [updated[j], updated[idx]]
     setCerts(updated); syncCerts(updated)
+  }
+
+  /* ─── FAQS ─── */
+  const [faqModal, setFaqModal] = useState({ show: false, data: null })
+  const saveFaq = (formData) => {
+    let updated
+    if (formData.id && faqs.some(f => f.id === formData.id)) {
+      updated = faqs.map(f => f.id === formData.id ? { ...f, ...formData } : f); toast('FAQ updated ✓')
+    } else {
+      const maxId = faqs.reduce((m, f) => Math.max(m, Number(f.id) || 0), 0)
+      updated = [...faqs, { ...formData, id: maxId + 1, displayOrder: faqs.length + 1, isActive: true }]; toast('FAQ added ✓')
+    }
+    setFaqs(updated); syncFaqs(updated); setFaqModal({ show: false, data: null })
+  }
+  const deleteFaq = (id) => {
+    askConfirm('Delete this FAQ?', () => {
+      const updated = faqs.filter(f => f.id !== id)
+      setFaqs(updated); syncFaqs(updated); setFaqModal({ show: false, data: null }); toast('FAQ deleted')
+    })
+  }
+  const moveFaq = (id, dir) => {
+    const idx = faqs.findIndex(f => f.id === id); const j = idx + dir
+    if (j < 0 || j >= faqs.length) return
+    const updated = [...faqs]; [updated[idx], updated[j]] = [updated[j], updated[idx]]
+    setFaqs(updated); syncFaqs(updated)
+  }
+
+  /* ─── BLOGS ─── */
+  const [blogModal, setBlogModal] = useState({ show: false, data: null })
+  const saveBlog = (formData) => {
+    let updated
+    const slug = slugify(formData.title || '')
+    if (formData.id && blogs.some(b => b.id === formData.id)) {
+      updated = blogs.map(b => b.id === formData.id ? { ...b, ...formData, slug: formData.slug || slug } : b); toast('Blog updated ✓')
+    } else {
+      const maxId = blogs.reduce((m, b) => Math.max(m, Number(b.id) || 0), 0)
+      updated = [...blogs, { ...formData, id: maxId + 1, slug: formData.slug || slug, isPublished: formData.isPublished ?? true }]; toast('Blog published ✓')
+    }
+    setBlogs(updated); syncBlogs(updated); setBlogModal({ show: false, data: null })
+  }
+  const deleteBlog = (id) => {
+    askConfirm('Delete this blog post?', () => {
+      const updated = blogs.filter(b => b.id !== id)
+      setBlogs(updated); syncBlogs(updated); setBlogModal({ show: false, data: null }); toast('Blog deleted')
+    })
   }
 
   /* ─── SETTINGS ─── */
@@ -1217,6 +1270,95 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
         </div>
       </section>
 
+      {/* ── FAQS ── */}
+      <section className={`page ${page === 'faqs' ? 'active' : ''}`} id="page-faqs">
+        <div className="page-head">
+          <div><h2>FAQs</h2><p>Manage frequently asked questions shown on the public FAQ page</p></div>
+          <button className="btn btn-primary" onClick={() => setFaqModal({ show: true, data: { question: '', answer: '', isActive: true } })}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> Add FAQ
+          </button>
+        </div>
+        <div className="panel">
+          <div className="tbl-wrap">
+            {faqs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>No FAQs yet. Click "Add FAQ" to create one.</div>
+            ) : (
+              <table>
+                <thead><tr><th style={{width:40}}>#</th><th>Question</th><th style={{width:90}}>Active</th><th style={{width:130}}>Order</th><th style={{width:120}}>Actions</th></tr></thead>
+                <tbody>
+                  {faqs.map((faq, i) => (
+                    <tr key={faq.id}>
+                      <td style={{ color: 'var(--muted)', fontSize: 12 }}>{i + 1}</td>
+                      <td style={{ fontSize: 13, fontWeight: 500 }}>{faq.question}</td>
+                      <td>
+                        <span className={`tag ${faq.isActive ? 'ok' : 'mute'}`}>
+                          <span className="dot" />{faq.isActive ? 'Active' : 'Hidden'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-outline btn-sm" onClick={() => moveFaq(faq.id, -1)} disabled={i === 0}>↑</button>
+                          <button className="btn btn-outline btn-sm" onClick={() => moveFaq(faq.id, 1)} disabled={i === faqs.length - 1}>↓</button>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-outline btn-sm" onClick={() => setFaqModal({ show: true, data: { ...faq } })}>Edit</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteFaq(faq.id)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BLOGS ── */}
+      <section className={`page ${page === 'blogs' ? 'active' : ''}`} id="page-blogs-admin">
+        <div className="page-head">
+          <div><h2>Blog Posts</h2><p>Manage articles published on the public Blogs page</p></div>
+          <button className="btn btn-primary" onClick={() => setBlogModal({ show: true, data: { title: '', slug: '', excerpt: '', content: '', featuredImage: '', category: '', tags: '', isPublished: true, metaTitle: '', metaDescription: '' } })}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> New Blog Post
+          </button>
+        </div>
+        <div className="panel">
+          <div className="tbl-wrap">
+            {blogs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>No blog posts yet. Click "New Blog Post" to create one.</div>
+            ) : (
+              <table>
+                <thead><tr><th>Title</th><th>Category</th><th style={{width:100}}>Status</th><th style={{width:120}}>Actions</th></tr></thead>
+                <tbody>
+                  {blogs.map((blog) => (
+                    <tr key={blog.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, fontSize: 13 }}>{blog.title}</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{blog.slug}</div>
+                      </td>
+                      <td style={{ fontSize: 13 }}>{blog.category || '—'}</td>
+                      <td>
+                        <span className={`tag ${blog.isPublished ? 'ok' : 'mute'}`}>
+                          <span className="dot" />{blog.isPublished ? 'Published' : 'Draft'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-outline btn-sm" onClick={() => setBlogModal({ show: true, data: { ...blog } })}>Edit</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteBlog(blog.id)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* ═══ MODALS ═══ */}
 
       {/* Product modal */}
@@ -1306,6 +1448,12 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
 
       {/* Cert modal */}
       <CertModal show={certModal.show} data={certModal.data} onSave={saveCert} onClose={() => setCertModal({ show: false, data: null })} />
+
+      {/* FAQ modal */}
+      <FaqModal show={faqModal.show} data={faqModal.data} onSave={saveFaq} onDelete={deleteFaq} onClose={() => setFaqModal({ show: false, data: null })} />
+
+      {/* Blog modal */}
+      <BlogModal show={blogModal.show} data={blogModal.data} onSave={saveBlog} onDelete={deleteBlog} onClose={() => setBlogModal({ show: false, data: null })} />
 
       {/* Confirm modal */}
       <ConfirmModal show={confirm.show} msg={confirm.msg} onConfirm={doConfirm} onCancel={() => setConfirm(c => ({ ...c, show: false }))} okLabel={confirm.okLabel} />
@@ -1550,3 +1698,144 @@ function CertModal({ show, data, onSave, onClose }) {
     </Modal>
   )
 }
+
+/* ── FAQ Modal ── */
+function FaqModal({ show, data, onSave, onDelete, onClose }) {
+  const [form, setForm] = useState(data || { question: '', answer: '', isActive: true })
+  useEffect(() => { if (data) setForm(data) }, [data])
+  if (!show) return null
+  return (
+    <Modal show={show} onClose={onClose} title={data?.id ? 'Edit FAQ' : 'Add FAQ'}
+      footer={<>
+        {data?.id && <button className="btn btn-danger" onClick={() => onDelete(data.id)}>Delete</button>}
+        <span className="spacer" />
+        <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+        <button className="btn btn-primary" onClick={() => { if (!form.question?.trim() || !form.answer?.trim()) return; onSave(form) }}>Save FAQ</button>
+      </>}>
+      <div className="field">
+        <label>Question</label>
+        <input className="inp" value={form.question||''} onChange={(e) => setForm(f => ({ ...f, question: e.target.value }))} placeholder="What is the minimum order quantity?" />
+      </div>
+      <div className="field">
+        <label>Answer</label>
+        <textarea className="inp" rows={5} value={form.answer||''} onChange={(e) => setForm(f => ({ ...f, answer: e.target.value }))} placeholder="Our minimum order starts at 500 kg per product category…" style={{ minHeight: 120 }} />
+      </div>
+      <div className="field mb-0">
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+          <input type="checkbox" checked={form.isActive !== false} onChange={(e) => setForm(f => ({ ...f, isActive: e.target.checked }))} />
+          <span>Active (visible on public FAQ page)</span>
+        </label>
+      </div>
+    </Modal>
+  )
+}
+
+/* ── Blog Modal ── */
+function BlogModal({ show, data, onSave, onDelete, onClose }) {
+  const [form, setForm] = useState(data || {})
+  const [activeTab, setActiveTab] = useState('content')
+  useEffect(() => { if (data) { setForm(data); setActiveTab('content') } }, [data])
+  if (!show) return null
+
+  const slugify = (v) => String(v || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+  const handleTitleChange = (val) => {
+    setForm(f => ({
+      ...f,
+      title: val,
+      slug: f.slug || slugify(val),
+      metaTitle: f.metaTitle || val
+    }))
+  }
+
+  return (
+    <Modal show={show} onClose={onClose} title={data?.id ? 'Edit Blog Post' : 'New Blog Post'}
+      footer={<>
+        {data?.id && <button className="btn btn-danger" onClick={() => onDelete(data.id)}>Delete Post</button>}
+        <span className="spacer" />
+        <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+        <button className="btn btn-primary" onClick={() => { if (!form.title?.trim()) return; onSave(form) }}>
+          {form.isPublished !== false ? 'Publish' : 'Save Draft'}
+        </button>
+      </>}>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid var(--cream2)', paddingBottom: 0 }}>
+        {[['content','Content'],['media','Image & SEO'],['settings','Settings']].map(([k, l]) => (
+          <button key={k}
+            onClick={() => setActiveTab(k)}
+            style={{ padding: '8px 16px', fontSize: 12, fontWeight: 600, letterSpacing: '0.5px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: activeTab === k ? '2px solid var(--rose)' : '2px solid transparent', color: activeTab === k ? 'var(--terra)' : 'var(--muted)', transition: 'all 0.2s' }}
+          >{l}</button>
+        ))}
+      </div>
+
+      {/* Content Tab */}
+      {activeTab === 'content' && (
+        <>
+          <div className="field">
+            <label>Title *</label>
+            <input className="inp" value={form.title||''} onChange={(e) => handleTitleChange(e.target.value)} placeholder="E.g. 7 Benefits of Himalayan Salt" />
+          </div>
+          <div className="field">
+            <label>URL Slug</label>
+            <input className="inp" value={form.slug||''} onChange={(e) => setForm(f => ({ ...f, slug: slugify(e.target.value) }))} placeholder="auto-generated-from-title" />
+          </div>
+          <div className="field">
+            <label>Excerpt <small>short summary shown on blog listing</small></label>
+            <textarea className="inp" rows={3} value={form.excerpt||''} onChange={(e) => setForm(f => ({ ...f, excerpt: e.target.value }))} placeholder="A brief 1–2 sentence summary of the article…" style={{ minHeight: 80 }} />
+          </div>
+          <div className="field mb-0">
+            <label>Content <small>HTML supported</small></label>
+            <textarea
+              className="inp"
+              rows={12}
+              value={form.content||''}
+              onChange={(e) => setForm(f => ({ ...f, content: e.target.value }))}
+              placeholder="<p>Write your full blog article here. HTML tags like &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;img&gt; are all supported.</p>"
+              style={{ minHeight: 260, fontFamily: 'monospace', fontSize: 13 }}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Media & SEO Tab */}
+      {activeTab === 'media' && (
+        <>
+          <div className="field">
+            <label>Featured Image <small>resized to 640px max</small></label>
+            <ImgUpload img={form.featuredImage} onImg={(img) => setForm(f => ({ ...f, featuredImage: img }))} onRemove={() => setForm(f => ({ ...f, featuredImage: '' }))} phEmoji="📰" />
+          </div>
+          <div className="field">
+            <label>Meta Title <small>for browser tab & Google</small></label>
+            <input className="inp" value={form.metaTitle||''} onChange={(e) => setForm(f => ({ ...f, metaTitle: e.target.value }))} placeholder="SEO-optimized title (50–60 chars)" />
+          </div>
+          <div className="field mb-0">
+            <label>Meta Description</label>
+            <textarea className="inp" rows={3} value={form.metaDescription||''} onChange={(e) => setForm(f => ({ ...f, metaDescription: e.target.value }))} placeholder="Compelling description for Google search snippets (150–160 chars)" style={{ minHeight: 80 }} />
+          </div>
+        </>
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <>
+          <div className="field">
+            <label>Category</label>
+            <input className="inp" value={form.category||''} onChange={(e) => setForm(f => ({ ...f, category: e.target.value }))} placeholder="e.g. Health, Export Guide, Product Spotlight" />
+          </div>
+          <div className="field">
+            <label>Tags <small>comma-separated</small></label>
+            <input className="inp" value={form.tags||''} onChange={(e) => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="himalayan salt, health benefits, export" />
+          </div>
+          <div className="field mb-0">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.isPublished !== false} onChange={(e) => setForm(f => ({ ...f, isPublished: e.target.checked }))} />
+              <span>Published (visible on public Blogs page)</span>
+            </label>
+          </div>
+        </>
+      )}
+    </Modal>
+  )
+}
+
