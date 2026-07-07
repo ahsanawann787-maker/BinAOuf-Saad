@@ -1288,6 +1288,37 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
                   </div>
                 ))}
                 <div className="field">
+                  <label>Site Logo</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {settings.logo && (
+                      <div style={{ width: 64, height: 64, borderRadius: 8, overflow: 'hidden', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src={settings.logo} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      </div>
+                    )}
+                    <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              setSettings(s => ({ ...s, logo: ev.target.result }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }} 
+                      />
+                      {settings.logo ? 'Change Logo' : 'Upload Logo'}
+                    </label>
+                    {settings.logo && (
+                      <button className="btn btn-danger" onClick={() => setSettings(s => ({ ...s, logo: '' }))} style={{ padding: '8px 12px' }}>Remove</button>
+                    )}
+                  </div>
+                </div>
+                <div className="field">
                   <label>Meta Description</label>
                   <textarea className="inp" value={settings.metaDesc||''} onChange={(e) => setSettings(s => ({ ...s, metaDesc: e.target.value }))} />
                 </div>

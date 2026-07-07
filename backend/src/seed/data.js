@@ -57,10 +57,13 @@ export const SEED_HOMECATS = [
 ];
 
 export const SEED_CERTS = [
-  { id: 1, emoji: '🏅', title: 'ISO 22000', desc: 'Food Safety Management System certified. Our processing facility meets international food handling standards.', img: '' },
-  { id: 2, emoji: '🌙', title: 'Halal Certified', desc: 'All edible products carry a valid Halal certificate, suitable for Muslim-majority markets worldwide.', img: '' },
-  { id: 3, emoji: '🇺🇸', title: 'FDA Compliant', desc: 'Our edible salt products comply with US FDA food safety regulations for North American distribution.', img: '' },
-  { id: 4, emoji: '🌿', title: 'Natural and Organic', desc: 'No additives, no artificial colouring, no anti-caking agents. Pure as nature intended.', img: '' },
+  { id: 1, emoji: '🏅', title: 'ISO 22000:2018', desc: 'Food Safety Management System certified. Our processing facility meets international food handling standards.', img: '' },
+  { id: 2, emoji: '🏅', title: 'ISO 9001:2015', desc: 'Quality Management System certified. Our processes meet international quality standards.', img: '' },
+  { id: 3, emoji: '🌙', title: 'Halal Certified', desc: 'All edible products carry a valid Halal certificate, suitable for Muslim-majority markets worldwide.', img: '' },
+  { id: 4, emoji: '🛡️', title: 'FDA Compliant', desc: 'Our edible salt products comply with US FDA food safety regulations for North American distribution.', img: '' },
+  { id: 5, emoji: '🌿', title: 'Natural and Organic', desc: 'No additives, no artificial colouring, no anti-caking agents. Pure as nature intended.', img: '' },
+  { id: 6, emoji: '🏆', title: 'Pakistan Standards', desc: 'Our edible salt products comply with Pakistan\'s national food safety regulations.', img: '' },
+  { id: 7, emoji: '✡️', title: 'Kosher Certificate', desc: 'Our edible salt is certified Kosher, produced and handled in accordance with Jewish dietary laws for trusted global export.', img: '' },
 ];
 
 export const SEED_ORDERS = [];

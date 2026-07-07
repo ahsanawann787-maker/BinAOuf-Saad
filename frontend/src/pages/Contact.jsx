@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useReveal } from '../hooks/useReveal'
 import api from '../services/api'
+import { useSettings } from '../context/SettingsContext'
 
 const FAQS = [
   { q: 'What is the minimum order quantity (MOQ)?', a: 'MOQ varies by product. Samples start from 5 to 10kg. Wholesale from 100 to 500kg. Full container orders from 5 to 10 tons depending on product.' },
@@ -17,7 +18,9 @@ const ORDER_TYPES = ['Sample Order', 'Wholesale', 'Bulk / Container', 'Private L
 
 export default function Contact() {
   useReveal()
+  const { settings } = useSettings()
 
+  const [faqs, setFaqs] = useState(FAQS)
   const [form, setForm] = useState({
     name: '', company: '', email: '', phone: '', country: '',
     product: '', qty: '', market: '', message: ''
@@ -28,6 +31,20 @@ export default function Contact() {
   const [error, setError] = useState('')
   const [openFaq, setOpenFaq] = useState(null)
   const [lastWaUrl, setLastWaUrl] = useState('')
+
+  useEffect(() => {
+    async function loadFaqs() {
+      try {
+        const res = await api.getPublicFaqs()
+        if (res?.data && res.data.length > 0) {
+          setFaqs(res.data)
+        }
+      } catch (err) {
+        console.error('Failed to load FAQs:', err)
+      }
+    }
+    loadFaqs()
+  }, [])
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
@@ -55,7 +72,8 @@ export default function Contact() {
 *Message:*
 ${message}`;
 
-    const whatsappUrl = `https://wa.me/923110282668?text=${encodeURIComponent(waMessage)}`;
+    const waNumber = (settings?.whatsapp || '+923359217277').replace(/[^0-9]/g, '')
+    const whatsappUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
     setLastWaUrl(whatsappUrl)
 
     // 1. Send email via Web3Forms (blocking so it registers before redirects)
@@ -119,36 +137,43 @@ ${message}`;
       {/* CONTACT CARDS */}
       <div className="cm-cards">
         <div className="cm-grid">
-          <a href="https://wa.me/923110282668" target="_blank" rel="noreferrer" className="cmc reveal">
+          <a href={`https://wa.me/${(settings?.whatsapp || '+923359217277').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="cmc reveal">
             <span className="cmc-icon">💬</span>
             <div className="cmc-title">WhatsApp</div>
-            <div className="cmc-val">+92 311 028 2668</div>
-            <div className="cmc-desc">Also available: +92 325 151 2035. Fastest response within 1 hour.</div>
+            <div className="cmc-val">{settings?.whatsapp || '+92 335 921 7277'}</div>
+            <div className="cmc-desc">Fastest response within 1 hour.</div>
             <span className="cmc-btn">Chat Now →</span>
           </a>
-          <a href="tel:+923110282668" className="cmc reveal">
+          <a href={`tel:${(settings?.phone1 || '+923359217277').replace(/[^0-9+]/g, '')}`} className="cmc reveal">
             <span className="cmc-icon">📞</span>
             <div className="cmc-title">Call Us</div>
-            <div className="cmc-val">+92 311 028 2668</div>
-            <div className="cmc-desc">Also: +92 325 151 2035. Mon to Sat, 9 AM to 6 PM PKT.</div>
+            <div className="cmc-val">{settings?.phone1 || '+92 335 921 7277'}</div>
+            <div className="cmc-desc">Mon to Sat, 9 AM to 6 PM PKT.</div>
             <span className="cmc-btn">Call Now →</span>
           </a>
-          <a href="mailto:binaoufchemicals.pk@gmail.com" className="cmc reveal">
+          <a href={`mailto:${settings?.email || 'binaoufsalts@gmail.com'}`} className="cmc reveal">
             <span className="cmc-icon">✉️</span>
             <div className="cmc-title">Email</div>
-            <div className="cmc-val">binaoufchemicals.pk@gmail.com</div>
+            <div className="cmc-val">{settings?.email || 'binaoufsalts@gmail.com'}</div>
             <div className="cmc-desc">Send detailed inquiries, attach specifications, or request our full product catalogue and price list.</div>
             <span className="cmc-btn">Email Us →</span>
           </a>
-          <div className="cmc reveal">
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Quaidabad+Khushab+Punjab+Pakistan"
+            target="_blank"
+            rel="noreferrer"
+            className="cmc reveal"
+          >
             <span className="cmc-icon">📍</span>
             <div className="cmc-title">Our Location</div>
-            <div className="cmc-val">Sargodha, Punjab</div>
-            <div className="cmc-desc">Processing facility near Warcha Salt Mine. Exporting from Port Qasim, Karachi. Visitors by appointment.</div>
-            <span className="cmc-btn" style={{ background: 'var(--cream2)', color: 'var(--terra)' }}>View Map →</span>
-          </div>
+            <div className="cmc-val">Quaidabad, Khushab, Punjab</div>
+            <div className="cmc-desc">{settings?.address || 'Processing facility near Warcha Salt Mine, Khushab. Exporting from Port Qasim, Karachi. Visitors by appointment.'}</div>
+            <span className="cmc-btn" style={{ background: 'var(--cream2)', color: 'var(--terra)' }}>View on Maps →</span>
+          </a>
         </div>
       </div>
+
+
 
       {/* MAIN CONTACT SECTION */}
       <div className="contact-main">
@@ -160,12 +185,12 @@ ${message}`;
 
           <div className="info-blocks">
             {[
-              { icon: '💬', label: 'WhatsApp (Preferred)', val: '+92 311 028 2668', sub: '+92 325 151 2035' },
-              { icon: '📞', label: 'Phone / Voice Call', val: '+92 311 028 2668', sub: 'Mon to Sat, 9:00 AM to 6:00 PM PKT' },
-              { icon: '📞', label: 'Phone / Voice Call', val: '+92 325 151 2035', sub: 'Mon to Sat, 9:00 AM to 6:00 PM PKT' },
-              { icon: '✉️', label: 'Email', val: 'binaoufchemicals.pk@gmail.com', sub: 'For all inquiries and shipment queries' },
-              { icon: '📍', label: 'Processing Facility', val: 'Khushab, Punjab, Pakistan', sub: 'Near Warcha Salt Mine, visitors by appointment' },
-              { icon: '🚢', label: 'Export Port', val: 'Port Qasim, Karachi', sub: 'Air freight: Allama Iqbal International, Lahore' },
+              { icon: '💬', label: 'WhatsApp (Preferred)', val: settings?.whatsapp || '+92 335 921 7277', sub: '' },
+              { icon: '📞', label: 'Phone / Voice Call', val: settings?.phone1 || '+92 335 921 7277', sub: 'Mon to Sat, 9:00 AM to 6:00 PM PKT' },
+              ...(settings?.phone2 ? [{ icon: '📞', label: 'Phone / Voice Call', val: settings?.phone2, sub: 'Mon to Sat, 9:00 AM to 6:00 PM PKT' }] : []),
+              { icon: '✉️', label: 'Email', val: settings?.email || 'binaoufsalts@gmail.com', sub: 'For all inquiries and shipment queries' },
+              { icon: '📍', label: 'Processing Facility', val: 'Quaidabad, Khushab, Punjab, Pakistan', sub: 'Near Warcha Salt Mine — visitors by appointment' },
+              { icon: '🚢', label: 'Export Port', val: settings?.port || 'Port Qasim, Karachi', sub: `Air freight: ${settings?.airfreight || 'Allama Iqbal International, Lahore'}` },
             ].map(({ icon, label, val, sub }) => (
               <div key={val + label} className="ib">
                 <div className="ib-icon">{icon}</div>
@@ -186,12 +211,7 @@ ${message}`;
             <div className="wh-row"><span className="wh-day">Sunday</span><span className="wh-time">Closed, WhatsApp available</span></div>
           </div>
 
-          <div className="soc-row">
-            <button className="soc-btn">in</button>
-            <button className="soc-btn">fb</button>
-            <button className="soc-btn">ig</button>
-            <button className="soc-btn">yt</button>
-          </div>
+
         </div>
 
         {/* QUOTE FORM */}
@@ -280,13 +300,13 @@ ${message}`;
           <h2 className="sec-title" style={{ textAlign: 'center' }}>Frequently Asked<br /><em>Questions</em></h2>
         </div>
         <div className="faq-grid">
-          {FAQS.map(({ q, a }, i) => (
+          {faqs.map(({ q, question, a, answer }, i) => (
             <div key={i} className={`faq-item ${openFaq === i ? 'open' : ''}`}>
               <div className="faq-q" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                <span className="faq-q-text">{q}</span>
+                <span className="faq-q-text">{question || q}</span>
                 <span className="faq-chevron">▾</span>
               </div>
-              <div className="faq-a"><p>{a}</p></div>
+              <div className="faq-a"><p>{answer || a}</p></div>
             </div>
           ))}
         </div>

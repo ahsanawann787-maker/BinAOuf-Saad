@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
 import api from '../services/api'
+import { useSettings } from '../context/SettingsContext'
 import HomeTicker from '../components/HomeTicker'
 import cooking from '../assets/images/cooking_slider.jpg'
 import bath from '../assets/images/bath_slider.jpg'
@@ -47,6 +48,7 @@ const GRADS = [
 export default function Home() {
   useReveal()
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const [slideIdx, setSlideIdx] = useState(0)
   const [homeCats, setHomeCats] = useState(SLIDER_CATEGORIES)
 
@@ -98,8 +100,14 @@ export default function Home() {
             <button className="btn-outline" onClick={() => navigate('/contact')}>Request a Quote</button>
           </div>
           <div className="hero-stats">
-            <div><span className="stat-n">250M+</span><span className="stat-l">Years Old Salt</span></div>
-            <div><span className="stat-n">99.9%</span><span className="stat-l">NaCl Purity</span></div>
+            <div>
+              <span className="stat-n">{settings?.stat1 ? settings.stat1.split(' ')[0] : '250M+'}</span>
+              <span className="stat-l">{settings?.stat1 ? settings.stat1.substring(settings.stat1.indexOf(' ') + 1) : 'Years Old Salt'}</span>
+            </div>
+            <div>
+              <span className="stat-n">{settings?.stat2 ? settings.stat2.split(' ')[0] : '99.9%'}</span>
+              <span className="stat-l">{settings?.stat2 ? settings.stat2.substring(settings.stat2.indexOf(' ') + 1) : 'NaCl Purity'}</span>
+            </div>
           </div>
         </div>
       </section>
@@ -288,7 +296,7 @@ export default function Home() {
           </p>
           <div className="reveal" style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn-primary" onClick={() => navigate('/contact')}>Request a Quote →</button>
-            <a href="https://wa.me/923110282668" target="_blank" rel="noreferrer" className="btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <a href={`https://wa.me/${(settings?.whatsapp || '923359217277').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               💬 WhatsApp Us
             </a>
           </div>

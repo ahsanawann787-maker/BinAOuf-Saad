@@ -8,6 +8,7 @@ const settingsSchema = new mongoose.Schema(
     key: { type: String, default: 'site', unique: true },
     // Public-facing
     siteTitle: String, tagline: String, metaDesc: String,
+    logo: String,
     address: String, email: String,
     phone1: String, phone2: String, phone3: String, whatsapp: String,
     port: String, airfreight: String,
@@ -25,7 +26,7 @@ const settingsSchema = new mongoose.Schema(
 
 // Fields the public website is allowed to read.
 settingsSchema.statics.PUBLIC_FIELDS = [
-  'siteTitle', 'tagline', 'metaDesc', 'address', 'email',
+  'siteTitle', 'tagline', 'metaDesc', 'logo', 'address', 'email',
   'phone1', 'phone2', 'phone3', 'whatsapp', 'port', 'airfreight',
   'fb', 'ig', 'linkedin', 'stat1', 'stat2',
 ];

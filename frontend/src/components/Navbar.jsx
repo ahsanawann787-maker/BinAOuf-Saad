@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useSettings } from '../context/SettingsContext'
 
 export default function Navbar() {
   const [solid, setSolid] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const { settings } = useSettings()
 
   useEffect(() => {
     const onScroll = () => setSolid(window.scrollY > 60)
@@ -31,8 +33,13 @@ export default function Navbar() {
         <div
           className="nav-logo"
           onClick={() => navigate('/')}
+          style={{ display: 'flex', alignItems: 'center' }}
         >
-          Bin <span>Aouf</span>
+          {settings?.logo ? (
+            <img src={settings.logo} alt={settings?.siteTitle || 'Logo'} style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+          ) : (
+            <>Bin <span>Aouf</span></>
+          )}
         </div>
         <ul className="nav-links">
           {navLinks.map(({ label, path }) => (

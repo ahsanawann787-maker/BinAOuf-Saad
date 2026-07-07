@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
+import api, { API } from '../services/api'
 
 const TIMELINE = [
   { year: '2017', title: 'Founded in Punjab', desc: 'Started as a wholesale supplier of raw Himalayan salt to local distributors.' },
@@ -44,6 +46,53 @@ const MINES = [
 export default function About() {
   useReveal()
   const navigate = useNavigate()
+  const [certs, setCerts] = useState([])  // start empty, always filled by API
+  const [certsLoaded, setCertsLoaded] = useState(false)
+
+  useEffect(() => {
+    async function loadCerts() {
+      try {
+        const res = await api.getPublicCertifications()
+        if (res?.data) {
+          setCerts(res.data)  // always use DB data - all certs, any count
+        } else {
+          setCerts(CERTS)  // fallback only if API returns nothing
+        }
+      } catch (err) {
+        console.error('Failed to load certs:', err)
+        setCerts(CERTS)  // fallback on error
+      } finally {
+        setCertsLoaded(true)
+      }
+    }
+    loadCerts()
+  }, [])
+
+  // Re-run reveal observer after certs load so all cards animate in
+  useEffect(() => {
+    if (!certsLoaded) return
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) }
+        })
+      },
+      { threshold: 0.1 }
+    )
+    document.querySelectorAll('.reveal,.reveal-l,.reveal-r').forEach((el) => {
+      if (!el.classList.contains('visible')) obs.observe(el)
+    })
+    return () => obs.disconnect()
+  }, [certsLoaded])
+
+  function getImageUrl(img) {
+    if (!img) return '';
+    if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:')) {
+      return img;
+    }
+    const base = API.replace(/\/api$/, '');
+    return `${base}${img.startsWith('/') ? '' : '/'}${img}`;
+  }
 
   return (
     <div id="page-about" className="page active">
@@ -135,13 +184,20 @@ export default function About() {
           <h2 className="sec-title white" style={{ textAlign: 'center' }}>Certified, Tested and<br /><em>Globally Compliant</em></h2>
         </div>
         <div className="certs-grid">
-          {CERTS.map(({ icon, name, desc }) => (
-            <div key={name} className="cert-card reveal">
-              <div className="cert-icon">{icon}</div>
-              <div className="cert-name">{name}</div>
-              <div className="cert-desc">{desc}</div>
-            </div>
-          ))}
+          {certs.map(({ icon, emoji, title, name, desc, img }, idx) => {
+            const displayImg = getImageUrl(img)
+            return (
+              <div key={idx} className="cert-card reveal">
+                {displayImg ? (
+                  <div style={{ width: 48, height: 48, marginBottom: 16, backgroundImage: `url("${displayImg}")`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'left center' }} />
+                ) : (
+                  <div className="cert-icon">{emoji || icon || '🏅'}</div>
+                )}
+                <div className="cert-name">{title || name}</div>
+                <div className="cert-desc">{desc}</div>
+              </div>
+            )
+          })}
         </div>
       </div>
 

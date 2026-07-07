@@ -1,8 +1,16 @@
+import { useSettings } from '../context/SettingsContext'
+
 export default function WhatsAppFloat() {
+  const { settings } = useSettings()
+  
+  // Format the number to remove any spaces, dashes, or plus signs for the wa.me link
+  const rawNumber = settings?.whatsapp || '+923359217277'
+  const waNumber = rawNumber.replace(/[^0-9]/g, '')
+
   return (
     <a
       className="wa-float"
-      href="https://wa.me/923110282668"
+      href={`https://wa.me/${waNumber}`}
       target="_blank"
       rel="noreferrer"
       aria-label="Chat on WhatsApp"
