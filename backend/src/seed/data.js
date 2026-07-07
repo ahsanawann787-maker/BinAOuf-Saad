@@ -63,32 +63,11 @@ export const SEED_CERTS = [
   { id: 4, emoji: '🌿', title: 'Natural and Organic', desc: 'No additives, no artificial colouring, no anti-caking agents. Pure as nature intended.', img: '' },
 ];
 
-export const SEED_ORDERS = [
-  { id: 'BA-1042', cust: 'Hamburg Salt GmbH', cc: 'C9A84C', country: '🇩🇪 Germany', prod: 'Salt Lamps', qty: '500 pc', amt: '$4,900', status: 'shipped', date: 'Jun 21' },
-  { id: 'BA-1041', cust: 'Gulf Trading FZE', cc: 'B65C3A', country: '🇦🇪 UAE', prod: 'Edible Salt', qty: '12,000 kg', amt: '$5,040', status: 'pending', date: 'Jun 20' },
-  { id: 'BA-1040', cust: 'Saltworks LLC', cc: 'D98E73', country: '🇺🇸 USA', prod: 'Bath & Spa', qty: '2,000 kg', amt: '$2,400', status: 'paid', date: 'Jun 19' },
-  { id: 'BA-1039', cust: 'Nordic Wellness', cc: '3D6FA8', country: '🇸🇪 Sweden', prod: 'Salt Inhalers', qty: '800 pc', amt: '$2,480', status: 'processing', date: 'Jun 18' },
-  { id: 'BA-1038', cust: 'BritStone Ltd', cc: '9A4A2C', country: '🇬🇧 UK', prod: 'Bricks & Tiles', qty: '1,200 pc', amt: '$2,520', status: 'shipped', date: 'Jun 16' },
-  { id: 'BA-1037', cust: 'Maple Foods Inc', cc: '3F8F5F', country: '🇨🇦 Canada', prod: 'Edible Salt', qty: '8,000 kg', amt: '$3,360', status: 'paid', date: 'Jun 14' },
-  { id: 'BA-1036', cust: 'Doha Décor Co', cc: 'C0432F', country: '🇶🇦 Qatar', prod: 'Decorative', qty: '600 pc', amt: '$1,440', status: 'pending', date: 'Jun 12' },
-];
+export const SEED_ORDERS = [];
 
-export const SEED_CUSTOMERS = [
-  { id: 1, name: 'Hamburg Salt GmbH', cc: 'C9A84C', type: 'B2B Importer', country: 'Germany', email: 'orders@hamburgsalt.de', orders: 14, spent: '$38.2k', since: '2023' },
-  { id: 2, name: 'Gulf Trading FZE', cc: 'B65C3A', type: 'Distributor', country: 'UAE', email: 'info@gulftrade.ae', orders: 9, spent: '$24.6k', since: '2024' },
-  { id: 3, name: 'Saltworks LLC', cc: 'D98E73', type: 'Retail Chain', country: 'USA', email: 'buy@saltworks.com', orders: 6, spent: '$14.1k', since: '2024' },
-  { id: 4, name: 'Nordic Wellness Co', cc: '3D6FA8', type: 'Wellness Brand', country: 'Sweden', email: 'hello@nordicwell.se', orders: 5, spent: '$11.8k', since: '2025' },
-  { id: 5, name: 'BritStone Ltd', cc: '9A4A2C', type: 'Builder Supply', country: 'UK', email: 'sales@britstone.co.uk', orders: 4, spent: '$9.4k', since: '2025' },
-  { id: 6, name: 'Maple Foods Inc', cc: '3F8F5F', type: 'Food Processor', country: 'Canada', email: 'procure@maplefoods.ca', orders: 7, spent: '$16.7k', since: '2023' },
-];
+export const SEED_CUSTOMERS = [];
 
-export const SEED_INQ = [
-  { id: 1, name: 'Lena Fischer', cc: 'C9A84C', company: 'Hamburg Salt GmbH', country: 'Germany', subj: 'Bulk Salt Lamps — Q3 Order', msg: 'We are interested in placing a 1,000-unit order of natural shape salt lamps for Q3. Could you share FOB pricing and lead time to Hamburg port?', read: false, archived: false },
-  { id: 2, name: 'Omar Al-Rashid', cc: 'B65C3A', company: 'Gulf Trading FZE', country: 'UAE', subj: 'Private Label Edible Salt', msg: 'Looking for a white-label partner for retail edible salt in the GCC. Do you offer custom branded 500g & 1kg retail packs? Please send MOQ details.', read: false, archived: false },
-  { id: 3, name: 'Sarah Lindqvist', cc: '3D6FA8', company: 'Nordic Wellness', country: 'Sweden', subj: 'Salt Inhaler Samples', msg: 'We would love to evaluate your ceramic salt inhalers before a larger order. Can you ship 5 samples to Stockholm?', read: false, archived: false },
-  { id: 4, name: 'James Carter', cc: '3F8F5F', company: 'Maple Foods Inc', country: 'Canada', subj: 'Re: Coarse Edible Salt Quote', msg: 'Thanks for the quote — the pricing works for us. Please proceed with the 8,000kg order and share the proforma invoice.', read: true, archived: false },
-  { id: 5, name: 'Priya Nair', cc: 'D98E73', company: 'Saltworks LLC', country: 'USA', subj: 'Re: Bath Salt Range', msg: 'Confirmed receipt of samples, quality looks great. We will finalize SKUs by next week.', read: true, archived: false },
-];
+export const SEED_INQ = [];
 
 export const DEFAULT_COLS = [
   { key: 'art', label: 'Art#' },
