@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
 import api, { API } from '../services/api'
+import khewraMineImg from '../assets/images/khewra_mine.jpg'
 
 const TIMELINE = [
   { year: '2017', title: 'Founded in Punjab', desc: 'Started as a wholesale supplier of raw Himalayan salt to local distributors.' },
@@ -148,12 +149,10 @@ export default function About() {
         <div className="story-inner">
           <div className="reveal-l">
             <div className="story-card">
-              <span className="story-big-icon">⛰️</span>
+              <img src={khewraMineImg} alt="Khewra Salt Mines" className="story-card-bg" />
+              <div className="story-card-overlay" />
               <div className="story-caption">Khewra Salt Mines</div>
               <div className="story-sub">Punjab, Pakistan. 2nd Largest in the World</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', lineHeight: 1.8, fontWeight: 300, marginTop: 16, position: 'relative', zIndex: 1 }}>
-                From deep within the ancient Himalayan salt range, we bring nature's finest mineral treasure to the world, untouched, unprocessed, and full of life-giving minerals.
-              </div>
             </div>
           </div>
           <div className="reveal-r">
