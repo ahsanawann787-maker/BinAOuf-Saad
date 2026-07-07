@@ -135,6 +135,7 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   const [inquiries, setInquiries] = useState([])
   const [faqs, setFaqs] = useState([])
   const [blogs, setBlogs] = useState([])
+  const [processSteps, setProcessSteps] = useState([])
   const [cols, setCols] = useState({})
   const [settings, setSettings] = useState({})
   const [loading, setLoading] = useState(true)
@@ -159,7 +160,7 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   useEffect(() => {
     const boot = async () => {
       try {
-        const [c, p, cardRes, h, ce, o, cu, inq, cl, s, fq, bl] = await Promise.all([
+        const [c, p, cardRes, h, ce, o, cu, inq, cl, s, fq, bl, stepsRes] = await Promise.all([
           api.getCategories(), api.getProducts(), api.getCards(),
           api.getHomeCategories(),
           api.getCertifications(),
@@ -167,7 +168,8 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
           api.getProductColumns(),
           api.getSettings(),
           api.getFaqs(),
-          api.getBlogs()
+          api.getBlogs(),
+          api.getProcessSteps()
         ])
         setCats(Array.isArray(c?.data) ? c.data : [])
         const ps = Array.isArray(p?.data) ? p.data : []
@@ -181,6 +183,7 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
         setInquiries(Array.isArray(inq?.data) ? inq.data : [])
         setFaqs(Array.isArray(fq?.data) ? fq.data : [])
         setBlogs(Array.isArray(bl?.data) ? bl.data : [])
+        setProcessSteps(Array.isArray(stepsRes?.data) ? stepsRes.data : [])
         setCols(cl?.data || {})
         setSettings(s?.data || {})
         setLoading(false)
@@ -215,6 +218,8 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   const syncCols = useDebounce((data) => api.bulkPush('product-columns', { map: data }), 600)
   const syncFaqs = useDebounce((data) => api.bulkPush('faqs', data), 600)
   const syncBlogs = useDebounce((data) => api.bulkPush('blogs', data), 600)
+  const syncProcessSteps = useDebounce((data) => api.bulkPush('process-steps', data), 600)
+
 
   /* ─── stats ─── */
   const unreadInq = inquiries.filter(i => !i.read && !i.archived).length
@@ -523,6 +528,25 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
     askConfirm('Delete this blog post?', () => {
       const updated = blogs.filter(b => b.id !== id)
       setBlogs(updated); syncBlogs(updated); setBlogModal({ show: false, data: null }); toast('Blog deleted')
+    })
+  }
+
+  /* ─── PROCESS STEPS ─── */
+  const [processStepModal, setProcessStepModal] = useState({ show: false, data: null })
+  const saveProcessStep = (formData) => {
+    let updated
+    if (formData.id && processSteps.some(s => s.id === formData.id)) {
+      updated = processSteps.map(s => s.id === formData.id ? { ...s, ...formData } : s); toast('Process step updated ✓')
+    } else {
+      const maxId = processSteps.reduce((m, s) => Math.max(m, Number(s.id) || 0), 0)
+      updated = [...processSteps, { ...formData, id: maxId + 1 }]; toast('Process step added ✓')
+    }
+    setProcessSteps(updated); syncProcessSteps(updated); setProcessStepModal({ show: false, data: null })
+  }
+  const deleteProcessStep = (id) => {
+    askConfirm('Delete this process step?', () => {
+      const updated = processSteps.filter(s => s.id !== id)
+      setProcessSteps(updated); syncProcessSteps(updated); setProcessStepModal({ show: false, data: null }); toast('Process step deleted')
     })
   }
 
@@ -1359,6 +1383,58 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
         </div>
       </section>
 
+      {/* ── PROCESS STEPS ── */}
+      <section className={`page ${page === 'processsteps' ? 'active' : ''}`} id="page-processsteps-admin">
+        <div className="page-head">
+          <div><h2>Process Steps</h2><p>Manage the 6-step journey shown on the public Process page</p></div>
+        </div>
+        <div className="panel">
+          <div className="tbl-wrap">
+            {processSteps.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>No process steps found.</div>
+            ) : (
+              <table>
+                <thead><tr><th style={{width:60}}>Step</th><th>Title</th><th>Description / Bullets</th><th>Visual Preview</th><th style={{width:100}}>Actions</th></tr></thead>
+                <tbody>
+                  {processSteps.map((step) => {
+                    const previewImg = step.img;
+                    return (
+                      <tr key={step.id}>
+                        <td style={{ fontSize: 16, fontWeight: 700, color: 'var(--terra)', textAlign: 'center' }}>{step.n}</td>
+                        <td>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{step.title}</div>
+                        </td>
+                        <td style={{ fontSize: 12.5, color: 'var(--muted)', maxWidth: 400, whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                          <div>{step.desc}</div>
+                          {Array.isArray(step.list) && step.list.length > 0 && (
+                            <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                              {step.list.map((li, liIdx) => (
+                                <span key={liIdx} style={{ fontSize: 10, background: 'var(--cream)', padding: '2px 6px', borderRadius: 2 }}>{li}</span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          {previewImg ? (
+                            <div style={{ width: 72, height: 44, background: `url(${previewImg}) center/cover`, borderRadius: 4 }} />
+                          ) : (
+                            <div style={{ width: 72, height: 44, background: `linear-gradient(155deg,#${step.grad || 'd4876b,5c2318'})`, borderRadius: 4 }} />
+                          )}
+                        </td>
+                        <td>
+                          <button className="btn btn-outline btn-sm" onClick={() => setProcessStepModal({ show: true, data: { ...step } })}>Edit</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </section>
+
+
       {/* ═══ MODALS ═══ */}
 
       {/* Product modal */}
@@ -1454,6 +1530,9 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
 
       {/* Blog modal */}
       <BlogModal show={blogModal.show} data={blogModal.data} onSave={saveBlog} onDelete={deleteBlog} onClose={() => setBlogModal({ show: false, data: null })} />
+
+      {/* Process Step modal */}
+      <ProcessStepModal show={processStepModal.show} data={processStepModal.data} onSave={saveProcessStep} onDelete={deleteProcessStep} onClose={() => setProcessStepModal({ show: false, data: null })} />
 
       {/* Confirm modal */}
       <ConfirmModal show={confirm.show} msg={confirm.msg} onConfirm={doConfirm} onCancel={() => setConfirm(c => ({ ...c, show: false }))} okLabel={confirm.okLabel} />
@@ -1838,4 +1917,96 @@ function BlogModal({ show, data, onSave, onDelete, onClose }) {
     </Modal>
   )
 }
+
+/* ── Process Step Modal ── */
+function ProcessStepModal({ show, data, onSave, onDelete, onClose }) {
+  const [form, setForm] = useState(data || {})
+  useEffect(() => { if (data) setForm(data) }, [data])
+  if (!show) return null
+
+  const listText = Array.isArray(form.list) ? form.list.join('\n') : ''
+
+  return (
+    <Modal show={show} onClose={onClose} title={`Edit Process Step ${form.n || ''}`}
+      footer={<>
+        <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+        <button className="btn btn-primary" onClick={() => { if (!form.title?.trim()) return; onSave(form) }}>Save Step</button>
+      </>}>
+      
+      <div className="field">
+        <label>Custom Image <small>optional — replaces color gradient visual if uploaded</small></label>
+        <ImgUpload img={form.img} onImg={(img) => setForm(f => ({ ...f, img }))} onRemove={() => setForm(f => ({ ...f, img: '' }))} phEmoji="⚙️" />
+      </div>
+
+      {form.img && (
+        <div className="field">
+          <label>Image Fit <small>how the image fills the card area</small></label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            {['cover', 'contain', 'fill'].map(opt => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, fit: opt }))}
+                style={{
+                  flex: 1, padding: '7px 0', borderRadius: 6, border: '2px solid',
+                  borderColor: (form.fit || 'cover') === opt ? 'var(--terra)' : 'var(--border)',
+                  background: (form.fit || 'cover') === opt ? 'var(--terra)' : 'transparent',
+                  color: (form.fit || 'cover') === opt ? '#fff' : 'var(--ink)',
+                  fontWeight: 600, fontSize: 12, cursor: 'pointer', textTransform: 'capitalize',
+                  transition: 'all .2s'
+                }}
+              >{opt}</button>
+            ))}
+          </div>
+          {/* Live preview */}
+          <div style={{
+            width: '100%', height: 140, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)',
+            backgroundImage: `url(${form.img})`,
+            backgroundSize: form.fit || 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundColor: '#f0ebe4'
+          }} />
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6, textAlign: 'center' }}>
+            Preview — <strong>{form.fit || 'cover'}</strong>
+          </div>
+        </div>
+      )}
+
+      <div className="field-row">
+        <div className="field" style={{ flex: 1 }}>
+          <label>Step Number Prefix</label>
+          <input className="inp" value={form.n||''} onChange={(e) => setForm(f => ({ ...f, n: e.target.value }))} placeholder="e.g. 01" />
+        </div>
+        <div className="field" style={{ flex: 2 }}>
+          <label>Gradient (hex colors fallback)</label>
+          <input className="inp" value={form.grad||''} onChange={(e) => setForm(f => ({ ...f, grad: e.target.value }))} placeholder="e.g. d4876b,5c2318 (without #)" />
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Title</label>
+        <input className="inp" value={form.title||''} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Extraction and Mining" />
+      </div>
+
+      <div className="field">
+        <label>Description</label>
+        <textarea className="inp" rows={3} value={form.desc||''} onChange={(e) => setForm(f => ({ ...f, desc: e.target.value }))} placeholder="Detailed description of this step..." style={{ minHeight: 70 }} />
+      </div>
+
+      <div className="field mb-0">
+        <label>Bullet Points <small>(One bullet per line)</small></label>
+        <textarea 
+          className="inp" 
+          rows={4} 
+          value={listText} 
+          onChange={(e) => setForm(f => ({ ...f, list: e.target.value.split('\n').map(x => x.trim()).filter(Boolean) }))} 
+          placeholder="Room-and-pillar mining method&#10;Skilled miners with 20+ years experience" 
+          style={{ minHeight: 90 }} 
+        />
+      </div>
+    </Modal>
+  )
+}
+
 

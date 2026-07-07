@@ -128,3 +128,14 @@ export const blogSchema = z.object({
 });
 export const blogUpdateSchema = blogSchema.partial();
 
+export const processStepSchema = z.object({
+  n: str(10),
+  title: str(200),
+  desc: str(2000).optional().default(''),
+  list: z.array(z.string()).optional().default([]),
+  grad: str(100).optional().default('d4876b,5c2318'),
+  img: z.string().optional().default(''),
+  fit: z.enum(['cover', 'contain', 'fill']).optional().default('cover'),
+});
+export const processStepUpdateSchema = processStepSchema.partial();
+

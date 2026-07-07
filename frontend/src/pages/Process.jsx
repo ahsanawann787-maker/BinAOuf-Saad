@@ -1,41 +1,50 @@
+import { useState, useEffect } from 'react'
 import { useReveal } from '../hooks/useReveal'
+import api, { API } from '../services/api'
 
-const STEPS = [
+// Fallback steps in case of load delay or API issue
+const FALLBACK_STEPS = [
   {
     n: '01', title: 'Extraction and Mining',
     desc: 'Our mining operations at Khewra, Warcha, and Kalabagh follow strict ethical and environmental standards.',
     list: ['Room-and-pillar mining method', 'Skilled miners with 20+ years experience', 'Three mine sources for different grades'],
-    grad: '#d4876b,#5c2318',
+    grad: 'd4876b,5c2318',
+    img: ''
   },
   {
     n: '02', title: 'Processing and Grading',
     desc: 'At our Sargodha facility, raw salt is washed, dried, then crushed and sieved to consistent particle sizes.',
     list: ['Purified water washing only', 'Separate food-grade and décor lines'],
-    grad: '#c9a96e,#7a4020',
+    grad: 'c9a96e,7a4020',
+    img: ''
   },
   {
     n: '03', title: 'Laboratory Testing',
     desc: 'Before any batch is packaged, it undergoes comprehensive testing at our in-house and independent certified lab.',
     list: ['NaCl purity minimum 99.9%', '84 trace mineral ICP analysis', 'Heavy metals within WHO limits'],
-    grad: '#e8b090,#7a3828',
+    grad: 'e8b090,7a3828',
+    img: ''
   },
   {
     n: '04', title: 'Packaging and Branding',
     desc: 'From bulk sack filling to premium retail gift box assembly with custom labels for private label clients.',
     list: ['Food-grade inner lining for edible products', 'Custom label design and digital printing'],
-    grad: '#e0a880,#8a4828',
+    grad: 'e0a880,8a4828',
+    img: ''
   },
   {
     n: '05', title: 'Documentation',
     desc: 'Complete trade documents for every shipment, experienced with customs across all major markets.',
     list: ['Commercial Invoice and Packing List', 'COA and MSDS', 'Phytosanitary and Halal Certificate', 'Certificate of Origin, SGS on request'],
-    grad: '#c47058,#5c2318',
+    grad: 'c47058,5c2318',
+    img: ''
   },
   {
     n: '06', title: 'Worldwide Shipping',
     desc: 'Shipping from Port Qasim Karachi via sea freight and Lahore and Karachi airports via air.',
     list: ['FCL and LCL sea freight', 'Air freight for urgent orders', 'FOB Karachi, CIF, DDP available', 'Real-time shipment tracking provided'],
-    grad: '#e89a7a,#7a3020',
+    grad: 'e89a7a,7a3020',
+    img: ''
   },
 ]
 
@@ -54,8 +63,42 @@ const QA_STEPS = [
   { n: 4, title: 'Pre-Shipment Final Check', desc: 'Packed cartons randomly opened and inspected for weight, integrity, and labelling.' },
 ]
 
+function getImageUrl(img) {
+  if (!img) return '';
+  if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:')) {
+    return img;
+  }
+  const base = API.replace(/\/api$/, '');
+  return `${base}${img.startsWith('/') ? '' : '/'}${img}`;
+}
+
 export default function Process() {
+  const [steps, setSteps] = useState(FALLBACK_STEPS)
+
   useReveal()
+
+  useEffect(() => {
+    document.title = 'Our Extraction, Processing & Export Process — Bin Aouf'
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'Understand how we extract Himalayan salt ethically and wash, test, grade, package, and ship it to clients globally from Sargodha & Khewra.')
+    }
+
+    async function loadSteps() {
+      try {
+        const res = await api.getPublicProcessSteps()
+        if (res?.data && res.data.length > 0) {
+          setSteps(res.data)
+        }
+      } catch (err) {
+        console.error('Failed to load dynamic process steps:', err)
+      }
+    }
+    loadSteps()
+  }, [])
+
+
+
 
   return (
     <div id="page-process" className="page active">
@@ -73,8 +116,8 @@ export default function Process() {
           <h2 className="sec-title" style={{ textAlign: 'center' }}>Our 6-Step<br /><em>Process</em></h2>
         </div>
         <div className="proc-steps-grid reveal">
-          {STEPS.map(({ n, title }) => (
-            <div key={n} className="proc-step">
+          {steps.map(({ n, title }, idx) => (
+            <div key={idx} className="proc-step">
               <div className="proc-num">{n}</div>
               <div className="proc-step-title">{title}</div>
             </div>
@@ -85,18 +128,27 @@ export default function Process() {
       {/* STEP DETAILS */}
       <div className="proc-detail-sec">
         <div className="proc-detail-grid">
-          {STEPS.map(({ n, title, desc, list, grad }, i) => (
-            <div key={n} className={`pdc ${i % 2 !== 0 ? 'pdc-rev' : ''} ${i % 2 === 0 ? 'reveal-l' : 'reveal-r'}`}>
-              <div className="pdc-img" style={{ background: `linear-gradient(155deg,#${grad})` }} />
-              <div className="pdc-body">
-                <div className="pdc-title">{title}</div>
-                <div className="pdc-desc">{desc}</div>
-                <ul className="pdc-list">
-                  {list.map((item) => <li key={item}>{item}</li>)}
-                </ul>
+          {steps.map(({ n, title, desc, list, grad, img, fit }, i) => {
+            const displayImg = getImageUrl(img)
+            return (
+              <div key={i} className="pdc">
+                <div 
+                  className="pdc-img" 
+                  style={displayImg 
+                    ? { backgroundImage: `url(${displayImg})`, backgroundSize: fit || 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }
+                    : { background: `linear-gradient(155deg,#${grad || 'd4876b,5c2318'})` }
+                  }
+                />
+                <div className="pdc-body">
+                  <div className="pdc-title">{title}</div>
+                  <div className="pdc-desc">{desc}</div>
+                  <ul className="pdc-list">
+                    {Array.isArray(list) ? list.map((item, liIdx) => <li key={liIdx}>{item}</li>) : null}
+                  </ul>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

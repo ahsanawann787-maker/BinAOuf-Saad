@@ -8,6 +8,7 @@ import { HomeCat } from '../models/HomeCat.js';
 import { Cert } from '../models/Cert.js';
 import { FAQ } from '../models/FAQ.js';
 import { Blog } from '../models/Blog.js';
+import { ProcessStep } from '../models/ProcessStep.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { submitInquiry } from '../controllers/inquiry.controller.js';
 import { getPublicSettings } from '../controllers/settings.controller.js';
@@ -93,6 +94,12 @@ r.get('/blogs/:slug', asyncHandler(async (req, res) => {
   const data = await Blog.findOne({ slug: req.params.slug, isPublished: true }).lean({ virtuals: true });
   if (!data) return res.status(404).json({ ok: false, error: 'Blog not found' });
   res.json({ ok: true, data });
+}));
+
+// Process steps list
+r.get('/process-steps', asyncHandler(async (_req, res) => {
+  const data = await ProcessStep.find().sort({ id: 1 }).lean({ virtuals: true });
+  res.json({ ok: true, count: data.length, data });
 }));
 
 // Contact form submission.

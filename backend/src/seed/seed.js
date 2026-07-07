@@ -13,11 +13,12 @@ import { AdminUser } from '../models/AdminUser.js';
 import { Card } from '../models/Card.js';
 import { FAQ } from '../models/FAQ.js';
 import { Blog } from '../models/Blog.js';
+import { ProcessStep } from '../models/ProcessStep.js';
 import { ensureCounter } from '../utils/counter.js';
 import {
   SEED_CATS, SEED_PRODUCTS, SEED_HOMECATS, SEED_CERTS,
   SEED_ORDERS, SEED_CUSTOMERS, SEED_INQ, DEFAULT_COLS,
-  SEED_FAQS, SEED_BLOGS,
+  SEED_FAQS, SEED_BLOGS, SEED_PROCESS_STEPS,
 } from './data.js';
 
 const FRESH = process.argv.includes('--fresh');
@@ -49,7 +50,7 @@ async function run() {
       Category.deleteMany({}), Product.deleteMany({}), Card.deleteMany({}), HomeCat.deleteMany({}),
       Cert.deleteMany({}), Order.deleteMany({}), Customer.deleteMany({}),
       Inquiry.deleteMany({}), ProductColumns.deleteMany({}),
-      FAQ.deleteMany({}), Blog.deleteMany({}),
+      FAQ.deleteMany({}), Blog.deleteMany({}), ProcessStep.deleteMany({}),
     ]);
     console.log('   ✔ content collections cleared');
   }
@@ -63,6 +64,7 @@ async function run() {
   const inq = await upsertMany(Inquiry, SEED_INQ);
   const faqs = await upsertMany(FAQ, SEED_FAQS);
   const blogs = await upsertMany(Blog, SEED_BLOGS);
+  const steps = await upsertMany(ProcessStep, SEED_PROCESS_STEPS);
 
   const cardsToInsert = SEED_PRODUCTS.map((p, idx) => ({
     id: idx + 1,
@@ -90,6 +92,7 @@ async function run() {
   await ensureCounter('card', maxNum(cardsToInsert));
   await ensureCounter('faq', maxNum(SEED_FAQS));
   await ensureCounter('blog', maxNum(SEED_BLOGS));
+  await ensureCounter('processstep', maxNum(SEED_PROCESS_STEPS));
   const maxOrder = SEED_ORDERS.reduce((m, o) => Math.max(m, Number(String(o.id).replace('BA-', '')) || 0), 0);
   await ensureCounter('order', maxOrder);
 
@@ -133,6 +136,7 @@ async function run() {
   console.log('   ✔ cards           ', cards);
   console.log('   ✔ faqs            ', faqs);
   console.log('   ✔ blogs           ', blogs);
+  console.log('   ✔ process-steps   ', steps);
   console.log('   ✔ product-columns  seeded for', SEED_CATS.length, 'categories');
   console.log('   ✔ settings + admin user ready');
   console.log(`\n🔑 Admin login → ${env.admin.email} / (ADMIN_PASSWORD from .env)\n`);

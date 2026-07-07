@@ -13,11 +13,12 @@ import {
   cardSchema, cardUpdateSchema,
   faqSchema, faqUpdateSchema,
   blogSchema, blogUpdateSchema,
+  processStepSchema, processStepUpdateSchema,
 } from '../validators/schemas.js';
 import {
   productCtrl, categoryCtrl, homeCatCtrl, certCtrl, orderCtrl, customerCtrl, cardCtrl,
   publishCard, unpublishCard,
-  faqCtrl, blogCtrl,
+  faqCtrl, blogCtrl, processStepCtrl,
 } from '../controllers/resources.js';
 import { listInquiries, updateInquiry, deleteInquiry } from '../controllers/inquiry.controller.js';
 import { getSettings, updateSettings } from '../controllers/settings.controller.js';
@@ -36,6 +37,7 @@ import { ProductColumns } from '../models/ProductColumns.js';
 import { Card } from '../models/Card.js';
 import { FAQ } from '../models/FAQ.js';
 import { Blog } from '../models/Blog.js';
+import { ProcessStep } from '../models/ProcessStep.js';
 
 const r = Router();
 r.use(requireAuth); // everything below requires a valid admin token
@@ -62,6 +64,7 @@ resource('categories', categoryCtrl, categorySchema, categoryUpdateSchema, { idN
 resource('orders', orderCtrl, orderSchema, orderUpdateSchema, { idNum: false });
 resource('faqs', faqCtrl, faqSchema, faqUpdateSchema);
 resource('blogs', blogCtrl, blogSchema, blogUpdateSchema);
+resource('process-steps', processStepCtrl, processStepSchema, processStepUpdateSchema);
 
 // Inquiries (custom: query filters, no create here — created via public route).
 r.get('/inquiries', listInquiries);
@@ -95,6 +98,7 @@ r.put('/bulk/customers', bulkReplace(Customer));
 r.put('/bulk/inquiries', bulkReplace(Inquiry));
 r.put('/bulk/faqs', bulkReplace(FAQ));
 r.put('/bulk/blogs', bulkReplace(Blog));
+r.put('/bulk/process-steps', bulkReplace(ProcessStep));
 r.put('/bulk/product-columns', bulkColumns(ProductColumns));
 
 export default r;

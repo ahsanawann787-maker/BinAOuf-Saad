@@ -50,6 +50,7 @@ export const api = {
   getPublicFaqs: () => request('/public/faqs'),
   getPublicBlogs: (page = 1, limit = 12) => request(`/public/blogs?page=${page}&limit=${limit}`),
   getPublicBlogBySlug: (slug) => request(`/public/blogs/${slug}`),
+  getPublicProcessSteps: () => request('/public/process-steps'),
 
   // Admin
   getProducts: () => request('/admin/products'),
@@ -65,6 +66,7 @@ export const api = {
   getProductColumns: () => request('/admin/product-columns'),
   getFaqs: () => request('/admin/faqs'),
   getBlogs: () => request('/admin/blogs'),
+  getProcessSteps: () => request('/admin/process-steps'),
   bulkPush: (endpoint, data) =>
     request('/admin/bulk/' + endpoint, { method: 'PUT', body: data }),
 

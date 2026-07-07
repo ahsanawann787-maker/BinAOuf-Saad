@@ -10,6 +10,7 @@ import { Customer } from '../models/Customer.js';
 import { Card } from '../models/Card.js';
 import { FAQ } from '../models/FAQ.js';
 import { Blog } from '../models/Blog.js';
+import { ProcessStep } from '../models/ProcessStep.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 
@@ -150,3 +151,10 @@ export const blogCtrl = crudController({
     return body;
   },
 });
+
+export const processStepCtrl = crudController({
+  Model: ProcessStep,
+  genId: () => nextSeq('processstep'),
+  defaultSort: { id: 1 },
+});
+
