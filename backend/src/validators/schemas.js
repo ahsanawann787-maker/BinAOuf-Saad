@@ -38,6 +38,7 @@ export const productSchema = z.object({
   tags: str(300).optional().default(''),
   status: z.enum(['Active', 'Draft']).optional().default('Active'),
   img: str(2_000_000).optional().default(''), // allow base64 data-URIs
+  imgs: z.array(z.string().max(2_000_000)).optional().default([]), // allow multiple images
   specs,
 });
 export const productUpdateSchema = productSchema.partial();

@@ -101,6 +101,72 @@ function ImgUpload({ img, onImg, onRemove, phEmoji = '🧂' }) {
   )
 }
 
+/* ─── multiple image upload field ─── */
+function MultiImgUpload({ imgs = [], onAdd, onRemove, phEmoji = '🧂' }) {
+  const handleFile = (ev) => {
+    const files = Array.from(ev.target.files);
+    if (files.length === 0) return;
+    
+    files.forEach(f => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const im = new Image(); im.onload = () => {
+          let { width: w, height: h } = im; const max = 640
+          if (w > h && w > max) { h = h*max/w; w = max } else if (h > max) { w = w*max/h; h = max }
+          const c = document.createElement('canvas'); c.width = w; c.height = h
+          c.getContext('2d').drawImage(im, 0, 0, w, h)
+          onAdd(c.toDataURL('image/jpeg', 0.82))
+        }; im.src = e.target.result
+      }; reader.readAsDataURL(f)
+    });
+    ev.target.value = ''
+  }
+
+  return (
+    <div className="multi-img-up" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="multi-img-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+        {imgs.map((img, idx) => (
+          <div key={idx} className="multi-img-preview" style={{ position: 'relative', width: 80, height: 80, borderRadius: 6, border: '1px solid var(--border)', overflow: 'hidden', background: '#f0ebe4' }}>
+            <img src={img} alt={`preview-${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <button
+              type="button"
+              onClick={() => onRemove(idx)}
+              style={{
+                position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%',
+                background: 'rgba(224, 86, 62, 0.9)', color: 'white', border: 'none', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 10,
+                boxShadow: '0 1px 4px rgba(0,0,0,0.3)', padding: 0
+              }}
+              title="Remove image"
+            >
+              ✕
+            </button>
+            <div style={{
+              position: 'absolute', bottom: 2, left: 4, fontSize: 9, background: 'rgba(0,0,0,0.6)',
+              color: 'white', padding: '1px 3px', borderRadius: 3
+            }}>
+              #{idx + 1}
+            </div>
+          </div>
+        ))}
+        <label style={{
+          width: 80, height: 80, borderRadius: 6, border: '2px dashed var(--border)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', background: 'rgba(255,255,255,0.02)', transition: 'all 0.2s', gap: 4
+        }} className="multi-img-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 20, height: 20, color: 'var(--muted)' }}><path d="M12 5v14M5 12h14"/></svg>
+          <span style={{ fontSize: 9, color: 'var(--muted)', fontWeight: 500 }}>Add Image</span>
+          <input type="file" accept="image/*" multiple onChange={handleFile} hidden />
+        </label>
+      </div>
+      {imgs.length === 0 && (
+        <span style={{ fontSize: 11, color: 'var(--muted)' }}>No additional images added yet. Click above to select files.</span>
+      )}
+    </div>
+  )
+}
+
+
 /* ─── revenue chart ─── */
 function RevenueChart() {
   const data = [{m:'Nov',v:62},{m:'Dec',v:71},{m:'Jan',v:58},{m:'Feb',v:79},{m:'Mar',v:84},{m:'Apr',v:73},{m:'May',v:91},{m:'Jun',v:100}]
@@ -1639,8 +1705,17 @@ function ProductModal({ show, data, cats, colsFor, onSave, onCreateCategory, onC
         )}
       </div>
 
-      <div className="field"><label>Product Image</label>
+      <div className="field"><label>Product Image <small>(Primary cover image)</small></label>
         <ImgUpload img={form.img} onImg={(img) => setForm(f => ({ ...f, img }))} onRemove={() => setForm(f => ({ ...f, img:'' }))} phEmoji={cats.find(c => c.id === form.cat)?.emoji || '🧂'} />
+      </div>
+      <div className="field">
+        <label>Additional Gallery Images <small>(Optional — used for details modal slider)</small></label>
+        <MultiImgUpload
+          imgs={form.imgs || []}
+          onAdd={(newImg) => setForm(f => ({ ...f, imgs: [...(f.imgs || []), newImg] }))}
+          onRemove={(idxToRemove) => setForm(f => ({ ...f, imgs: (f.imgs || []).filter((_, i) => i !== idxToRemove) }))}
+          phEmoji={cats.find(c => c.id === form.cat)?.emoji || '🧂'}
+        />
       </div>
       <div className="field"><label>Description</label><textarea className="inp" value={form.desc||''} onChange={(e) => setForm(f => ({ ...f, desc: e.target.value }))} /></div>
       {catCols.length > 0 && (

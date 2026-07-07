@@ -135,7 +135,7 @@ export default function Process() {
                 <div 
                   className="pdc-img" 
                   style={displayImg 
-                    ? { backgroundImage: `url(${displayImg})`, backgroundSize: fit || 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }
+                    ? { backgroundImage: `url("${displayImg}")`, backgroundSize: fit || 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }
                     : { background: `linear-gradient(155deg,#${grad || 'd4876b,5c2318'})` }
                   }
                 />

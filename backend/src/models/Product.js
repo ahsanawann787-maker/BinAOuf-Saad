@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema(
     tags: { type: String, default: '' },
     status: { type: String, enum: ['Active', 'Draft'], default: 'Active' },
     img: { type: String, default: '' }, // absolute URL or base64 data-URI
+    imgs: { type: [String], default: [] }, // multiple images (absolute URLs or base64 data-URIs)
     // Flexible per-category spec columns (art#, weight, size, packing, custom...).
     specs: { type: mongoose.Schema.Types.Mixed, default: {} },
   },

@@ -29,15 +29,36 @@ function getImageUrl(img) {
 function ProductItem({ item, idx, navigate, onSelect }) {
   const grad = GRADS[idx % GRADS.length];
 
-  // High-fidelity fallback for seeded demo items
   let displayImg = getImageUrl(item.img);
   if (!displayImg) {
     if (item.name?.includes('Pink Salt Tiles')) displayImg = pinkTiles;
     if (item.name?.includes('Cooking Slab')) displayImg = cookingSlab;
   }
 
-  const bg = displayImg
-    ? `url(${displayImg}) center/cover`
+  // Combine primary and gallery images
+  const allImages = [];
+  if (displayImg) allImages.push(displayImg);
+  if (Array.isArray(item.imgs)) {
+    item.imgs.forEach(i => {
+      const u = getImageUrl(i);
+      if (u && !allImages.includes(u)) allImages.push(u);
+    });
+  }
+
+  const [currentIdx, setCurrentIdx] = useState(0);
+
+  // Auto-play product card slideshow if there are multiple images
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIdx((prev) => (prev + 1) % allImages.length);
+    }, 3200);
+    return () => clearInterval(interval);
+  }, [allImages.length]);
+
+  const activeImg = allImages[currentIdx];
+  const bg = activeImg
+    ? `url("${activeImg}") center/cover no-repeat`
     : `linear-gradient(155deg,#${grad})`;
 
   return (
@@ -53,12 +74,28 @@ function ProductItem({ item, idx, navigate, onSelect }) {
         }
       }}
     >
-      <div className="prod-item-img" style={{ background: bg }} />
+      <div className="prod-item-img" style={{ background: bg, transition: 'background 0.5s ease-in-out' }} />
       <div className="prod-item-body">
         <div className="prod-item-name">{item.name}</div>
         <div className="prod-item-desc" style={{ fontSize: 13, color: 'var(--muted)', margin: '4px 0 12px', fontWeight: 300, lineHeight: 1.5 }}>
           {item.desc || 'Premium quality Himalayan salt product.'}
         </div>
+        {allImages.length > 1 && (
+          <div style={{ display: 'flex', gap: 4, marginBottom: 8, justifyContent: 'center' }}>
+            {allImages.map((_, dotIdx) => (
+              <span
+                key={dotIdx}
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: '50%',
+                  background: dotIdx === currentIdx ? 'var(--terra)' : 'var(--border)',
+                  transition: 'background 0.3s'
+                }}
+              />
+            ))}
+          </div>
+        )}
         <div className="prod-item-cta">
           <button onClick={(e) => { e.stopPropagation(); navigate('/contact') }}>Get Quote →</button>
           <button className="prod-item-view" onClick={(e) => { e.stopPropagation(); onSelect(item) }}>View Details</button>
@@ -77,16 +114,143 @@ function ProductDetailModal({ product, onClose, navigate }) {
     if (product.name?.includes('Cooking Slab')) displayImg = cookingSlab
   }
 
+  // Combine primary and gallery images
+  const allImages = [];
+  if (displayImg) allImages.push(displayImg);
+  if (Array.isArray(product.imgs)) {
+    product.imgs.forEach(i => {
+      const u = getImageUrl(i);
+      if (u && !allImages.includes(u)) allImages.push(u);
+    });
+  }
+
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  const handlePrev = (e) => {
+    e.stopPropagation()
+    setActiveIdx((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))
+  }
+
+  const handleNext = (e) => {
+    e.stopPropagation()
+    setActiveIdx((prev) => (prev === allImages.length - 1 ? 0 : prev + 1))
+  }
+
   const specs = Object.entries(product.specs || {}).filter(([, value]) => {
     const text = String(value ?? '').trim()
     return text && text !== '—' && text !== '-'
   })
 
+  const mediaBg = allImages.length > 0 && allImages[activeIdx]
+    ? `url("${allImages[activeIdx]}")`
+    : 'linear-gradient(155deg,#e8c0a0,#c07050)';
+
   return (
     <div className="product-detail-backdrop" onClick={onClose}>
       <div className="product-detail-modal" onClick={(e) => e.stopPropagation()}>
         <button className="product-detail-close" onClick={onClose} aria-label="Close product details">×</button>
-        <div className="product-detail-media" style={{ backgroundImage: displayImg ? `url(${displayImg})` : 'linear-gradient(155deg,#e8c0a0,#c07050)' }} />
+        
+        {/* Interactive Image Slider */}
+        <div 
+          className="product-detail-media" 
+          style={{ 
+            backgroundImage: mediaBg, 
+            transition: 'background-image 0.4s ease-in-out',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 16px'
+          }}
+        >
+          {allImages.length > 1 && (
+            <>
+              {/* Arrow Left */}
+              <button 
+                onClick={handlePrev}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.85)',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  fontSize: 18,
+                  color: 'var(--ink)',
+                  fontWeight: 'bold',
+                  zIndex: 2,
+                  transition: 'transform 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                ‹
+              </button>
+
+              {/* Arrow Right */}
+              <button 
+                onClick={handleNext}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.85)',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  fontSize: 18,
+                  color: 'var(--ink)',
+                  fontWeight: 'bold',
+                  zIndex: 2,
+                  transition: 'transform 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                ›
+              </button>
+
+              {/* Slide Indicators / Dots */}
+              <div 
+                style={{
+                  position: 'absolute',
+                  bottom: 16,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  gap: 8,
+                  background: 'rgba(0,0,0,0.4)',
+                  padding: '6px 12px',
+                  borderRadius: 20,
+                  zIndex: 2
+                }}
+              >
+                {allImages.map((_, idx) => (
+                  <span 
+                    key={idx}
+                    onClick={(e) => { e.stopPropagation(); setActiveIdx(idx); }}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: idx === activeIdx ? '#ffffff' : 'rgba(255,255,255,0.5)',
+                      cursor: 'pointer',
+                      transition: 'background 0.3s'
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
         <div className="product-detail-body">
           <div className="tag">Product Details</div>
           <h3>{product.name}</h3>
