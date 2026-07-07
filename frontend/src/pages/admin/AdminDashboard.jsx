@@ -168,18 +168,43 @@ function MultiImgUpload({ imgs = [], onAdd, onRemove, phEmoji = '🧂' }) {
 
 
 /* ─── revenue chart ─── */
-function RevenueChart() {
-  const data = [{m:'Nov',v:62},{m:'Dec',v:71},{m:'Jan',v:58},{m:'Feb',v:79},{m:'Mar',v:84},{m:'Apr',v:73},{m:'May',v:91},{m:'Jun',v:100}]
-  const max = Math.max(...data.map(d => d.v))
+function RevenueChart({ orders = [] }) {
+  // Generate last 8 months labels dynamically
+  const months = []
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date()
+    d.setMonth(d.getMonth() - i)
+    months.push(d.toLocaleString('en-US', { month: 'short' }))
+  }
+
+  const data = months.map(m => {
+    // filter orders matching this month name
+    const monthOrders = orders.filter(o => {
+      if (o.createdAt) {
+        const od = new Date(o.createdAt)
+        return od.toLocaleString('en-US', { month: 'short' }) === m
+      }
+      return o.date && o.date.startsWith(m)
+    })
+    const sum = monthOrders.reduce((acc, o) => acc + parseAmt(o.amt), 0)
+    return { m, v: sum }
+  })
+
+  const maxVal = Math.max(...data.map(d => d.v), 1000) // fallback to 1000 scale min
   const [heights, setHeights] = useState(data.map(() => 0))
-  useEffect(() => { const t = setTimeout(() => setHeights(data.map(d => d.v/max*100)), 100); return () => clearTimeout(t) }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => setHeights(data.map(d => d.v / maxVal * 100)), 100)
+    return () => clearTimeout(t)
+  }, [orders, maxVal])
+
   return (
     <div className="chart">
       {data.map((d, i) => (
         <div key={d.m} className="bar-wrap">
           <div className="bar-track">
             <div className="bar" style={{ height: heights[i]+'%', transition: 'height 1s cubic-bezier(.2,.8,.2,1)' }}>
-              <div className="bar-tip">${(d.v*0.48).toFixed(1)}k</div>
+              <div className="bar-tip">${(d.v / 1000).toFixed(1)}k</div>
             </div>
           </div>
           <div className="bar-lab">{d.m}</div>
@@ -187,6 +212,23 @@ function RevenueChart() {
       ))}
     </div>
   )
+}
+
+function timeAgo(dateString) {
+  if (!dateString) return 'recently';
+  const d = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - d;
+  if (isNaN(diffMs) || diffMs < 0) return 'recently';
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffSec < 60) return 'just now';
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHr < 24) return `${diffHr} hrs ago`;
+  return `${diffDay} days ago`;
 }
 
 /* ═══════════ MAIN COMPONENT ═══════════ */
@@ -292,6 +334,52 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
   const activeProds = products.filter(p => p.status === 'Active').length
   const totalRev = orders.reduce((s, o) => s + parseAmt(o.amt), 0)
   const revDisplay = totalRev >= 1000 ? '$'+(totalRev/1000).toFixed(1)+'k' : '$'+totalRev.toFixed(0)
+
+  /* ─── dynamic activity feed ─── */
+  const getActivities = () => {
+    const list = []
+
+    // 1. Inquiries
+    inquiries.forEach(inq => {
+      list.push({
+        date: inq.createdAt ? new Date(inq.createdAt) : new Date(),
+        c: inq.read ? 'g' : 'b',
+        text: <>New inquiry from <b>{inq.name}</b> ({inq.country || 'International'})</>,
+        sub: `${inq.product || 'General Info'} · ${inq.createdAt ? timeAgo(inq.createdAt) : 'Recently'}`,
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+      })
+    })
+
+    // 2. Orders
+    orders.forEach(o => {
+      let color = 'o'
+      if (o.status === 'paid' || o.status === 'delivered') color = 'g'
+      if (o.status === 'shipped') color = 'b'
+      if (o.status === 'cancelled') color = 'r'
+
+      list.push({
+        date: o.createdAt ? new Date(o.createdAt) : new Date(),
+        c: color,
+        text: <>Order <b>#{o.id}</b> status is <b>{o.status}</b></>,
+        sub: `${o.cust} · ${o.prod} (${o.qty || '—'})`,
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>
+      })
+    })
+
+    // 3. Fallback when there is nothing in the database
+    if (list.length === 0) {
+      list.push({
+        date: new Date(),
+        c: 'mute',
+        text: <>Welcome to your admin panel! No inquiries or orders received yet.</>,
+        sub: 'Live database tracking active',
+        icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      })
+    }
+
+    // Sort by date descending
+    return list.sort((a, b) => b.date - a.date).slice(0, 5)
+  }
 
   /* ─── PRODUCTS modals ─── */
   const DEFAULT_COLS = [{ key:'art', label:'Art#' },{ key:'weight', label:'Weight (kg)' },{ key:'size', label:'Size (cm)' },{ key:'packing', label:'Packing' }]
@@ -634,10 +722,10 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
       <section className={`page ${page === 'dashboard' ? 'active' : ''}`} id="page-dashboard">
         <div className="stat-grid">
           {[
-            { cls:'t1', val: orders.length, lab:'Total Orders', trend:'up', note: '↑ 12.4% this month', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
-            { cls:'t2', val: revDisplay, lab:'Revenue (USD)', trend:'up', note: '↑ 8.1% this month', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+            { cls:'t1', val: orders.length, lab:'Total Orders', trend:'live', note: '✦ live count', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
+            { cls:'t2', val: revDisplay, lab:'Total Revenue (USD)', trend:'live', note: '✦ live count', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
             { cls:'t3', val: activeProds, lab:'Active Products', trend:'live', note: '✦ live count', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/></svg> },
-            { cls:'t4', val: unreadInq, lab:'Unread Inquiries', trend:'down', note: '↓ needs reply', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg> }
+            { cls:'t4', val: unreadInq, lab:'Unread Inquiries', trend:'live', note: '✦ needs reply', icon:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg> }
           ].map(({ cls, val, lab, trend, note, icon }) => (
             <div key={lab} className={`stat ${cls}`}>
               <div className="stat-ico">{icon}</div>
@@ -653,43 +741,16 @@ export default function AdminDashboard({ page, setPage, onDataLoaded, cats, setC
               <div><div className="sec-title">Revenue Overview</div><div className="sec-sub">Monthly export revenue · last 8 months</div></div>
               <span className="tag ok"><span className="dot" /> Live</span>
             </div>
-            <div className="panel-body"><RevenueChart /></div>
+            <div className="panel-body">
+              <RevenueChart orders={orders} />
+            </div>
           </div>
           <div className="panel">
-            <div className="panel-head"><div className="sec-title">Recent Activity</div><button className="btn-ghost btn-sm">View all</button></div>
+            <div className="panel-head">
+              <div className="sec-title">Recent Activity</div>
+            </div>
             <div className="panel-body" style={{ paddingTop: 8 }}>
-              {[
-                {
-                  c: 'g',
-                  text: <>Order <b>#BA-1042</b> marked as shipped</>,
-                  sub: 'Hamburg, Germany · 12 min ago',
-                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>
-                },
-                {
-                  c: 'b',
-                  text: <>New inquiry from <b>Nordic Wellness Co.</b></>,
-                  sub: 'Salt Lamps · 48 min ago',
-                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
-                },
-                {
-                  c: 'o',
-                  text: <>Order <b>#BA-1041</b> awaiting payment</>,
-                  sub: 'Dubai, UAE · 2 hrs ago',
-                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                },
-                {
-                  c: 'g',
-                  text: <>New customer <b>Saltworks LLC</b> registered</>,
-                  sub: 'Texas, USA · 5 hrs ago',
-                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                },
-                {
-                  c: 'r',
-                  text: <><b>Coarse Edible Salt</b> low stock alert</>,
-                  sub: 'Inventory · 8 hrs ago',
-                  icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                },
-              ].map(({ c, text, sub, icon }, i) => (
+              {getActivities().map(({ c, text, sub, icon }, i) => (
                 <div key={i} className="act">
                   <div className={`act-ico ${c}`}>{icon}</div>
                   <div className="act-body"><p>{text}</p><span>{sub}</span></div>
