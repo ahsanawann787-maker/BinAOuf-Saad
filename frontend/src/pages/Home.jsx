@@ -12,6 +12,7 @@ import colorGraded from '../assets/images/color_graded_slider.jpg'
 import spaWalls from '../assets/images/spa_walls_slider.jpg'
 import saltTherapy from '../assets/images/salt_therapy_slider.jpg'
 import saunaRetreat from '../assets/images/sauna_retreat_slider.jpg'
+import privateLabelVisual from '../assets/images/private_label.jpg'
 
 const SLIDER_CATEGORIES = [
   { id: 'decor', title: 'Décor and Lamps', desc: 'Hand-carved salt lamps, fire bowls and ambient lighting pieces.', grad: 'd4876b,5c2318' },
@@ -225,10 +226,7 @@ export default function Home() {
           <div className="pl-right reveal">
             <div className="pl-accent"></div>
             <div className="pl-frame">
-              <div className="pl-ph">
-                <div className="pl-ph-ico">🏷️</div>
-                <span>Private Label Visual</span>
-              </div>
+              <img src={privateLabelVisual} alt="Private Label Visual" className="pl-photo" />
             </div>
             <div className="pl-badge"><b>Low MOQ</b><small>Start Small, Scale Fast</small></div>
           </div>

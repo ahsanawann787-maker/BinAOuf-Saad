@@ -79,7 +79,7 @@ ${message}`;
     // 1. Send email via Web3Forms (blocking so it registers before redirects)
     try {
       const web3FormsData = {
-        access_key: '58261e39-6653-4168-98c0-f684c48b2fa4',
+        access_key: 'b49499d5-cc0c-4141-ad64-5ce8041bb0b3',
         subject: `New Inquiry from ${name} (${country})`,
         from_name: 'Bin Aouf Website',
         name: name,
