@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
 import api from '../services/api'
@@ -85,6 +86,15 @@ export default function Home() {
   return (
     <div id="page-home" className="page active">
 
+            <Helmet>
+        <title>Premium Himalayan Pink Salt Exporter | Bin Aouf</title>
+
+        <meta
+          name="description"
+          content="Bin Aouf is a leading Himalayan Pink Salt manufacturer and exporter from Pakistan supplying edible salt, salt lamps, bath salt, animal lick salt, spa products and bulk orders worldwide."
+        />
+      </Helmet>
+      
       {/* ── HERO ── */}
       <section className="hero">
         <div className="hero-inner">
