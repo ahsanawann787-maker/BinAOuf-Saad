@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
+import SEO from '../components/SEO'
 import api from '../services/api'
 
 export default function FAQ() {
@@ -13,13 +14,7 @@ export default function FAQ() {
   useReveal()
 
   useEffect(() => {
-    // Inject page title & meta description
-    document.title = 'Frequently Asked Questions (FAQ) — Bin Aouf'
-    const metaDesc = document.querySelector('meta[name="description"]')
-    if (metaDesc) {
-      metaDesc.setAttribute('content', 'Get answers to common queries regarding Himalayan salt export, wholesale orders, private labeling options, shipping schedules, and packaging specifications.')
-    }
-
+    
     async function loadFaqs() {
       try {
         const res = await api.getPublicFaqs()
@@ -69,10 +64,24 @@ export default function FAQ() {
   }, [faqs])
 
   return (
-    <div id="page-faq" className="page active" style={{ background: 'var(--cream)' }}>
-      {/* BANNER */}
-      <div className="contact-banner" style={{ background: 'linear-gradient(135deg, var(--terra) 0%, var(--terra-deep) 100%)', padding: '140px 80px 70px', textAlign: 'left' }}>
-        <div className="tag" style={{ color: 'var(--gold-lt)' }}>Information hub</div>
+  <div id="page-faq" className="page active" style={{ background: 'var(--cream)' }}>
+
+    <SEO
+      title="Frequently Asked Questions | Bin Aouf Himalayan Pink Salt"
+      description="Find answers about Himalayan Pink Salt exports, wholesale orders, private labeling, shipping, packaging, certifications, and international supply from Bin Aouf."
+      canonical="https://www.binaouf.com/faq"
+    />
+
+    {/* BANNER */}
+    <div
+      className="contact-banner"
+      style={{
+        background: 'linear-gradient(135deg, var(--terra) 0%, var(--terra-deep) 100%)',
+        padding: '140px 80px 70px',
+        textAlign: 'left'
+      }}
+    >
+      <div className="tag" style={{ color: 'var(--gold-lt)' }}>Information hub</div>
         <h1 className="sec-title white" style={{ color: 'white' }}>Frequently Asked<br /><em>Questions</em></h1>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, maxWidth: 580, marginTop: 16 }}>
           Find complete details about minimum orders, certifications, custom labeling, payment terms, and logistics for our Himalayan salt export catalog.
