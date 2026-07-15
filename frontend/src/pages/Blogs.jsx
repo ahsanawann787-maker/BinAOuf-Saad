@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
+import SEO from '../components/SEO'
 import api, { API } from '../services/api'
 
 function getImageUrl(img) {
@@ -24,14 +25,6 @@ export default function Blogs() {
   const limit = 6
 
   useReveal()
-
-  useEffect(() => {
-    document.title = 'Latest Himalayan Salt Industry Insights & News — Bin Aouf'
-    const metaDesc = document.querySelector('meta[name="description"]')
-    if (metaDesc) {
-      metaDesc.setAttribute('content', 'Stay updated with our blog. Articles covering Himalayan salt benefits, retail packaging solutions, wholesale trade practices, mine source guides, and decoration tips.')
-    }
-  }, [])
 
   useEffect(() => {
     let active = true
@@ -70,9 +63,23 @@ export default function Blogs() {
   }, [page, loading])
 
   return (
-    <div id="page-blogs" className="page active" style={{ background: 'var(--cream)' }}>
-      {/* BANNER */}
-      <div className="contact-banner" style={{ background: 'linear-gradient(135deg, var(--terra) 0%, var(--terra-deep) 100%)', padding: '140px 80px 70px', textAlign: 'left' }}>
+  <div id="page-blogs" className="page active" style={{ background: 'var(--cream)' }}>
+
+    <SEO
+      title="Latest Himalayan Salt Industry Insights & News | Bin Aouf"
+      description="Stay updated with our blog. Articles covering Himalayan salt benefits, retail packaging solutions, wholesale trade practices, mine source guides, and decoration tips."
+      canonical="https://www.binaouf.com/blogs"
+    />
+
+    {/* BANNER */}
+    <div
+      className="contact-banner"
+      style={{
+        background: 'linear-gradient(135deg, var(--terra) 0%, var(--terra-deep) 100%)',
+        padding: '140px 80px 70px',
+        textAlign: 'left'
+      }}
+    >
         <div className="tag" style={{ color: 'var(--gold-lt)' }}>Resources & news</div>
         <h1 className="sec-title white" style={{ color: 'white' }}>Bin Aouf <em>Blogs</em></h1>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, maxWidth: 580, marginTop: 16 }}>
