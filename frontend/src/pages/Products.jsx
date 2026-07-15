@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import SEO from '../components/SEO'
 import { useReveal } from '../hooks/useReveal'
 import api, { API } from '../services/api'
 import pinkTiles from '../assets/images/pink_salt_tiles.jpg'
@@ -384,21 +385,61 @@ export default function Products() {
   }, [activeTab, selectedSubcat, loading])
 
   if (loading) {
-    return (
-      <div id="page-products" className="page active" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: 'var(--muted)' }}>
-        <div style={{ fontSize: '1.2rem', letterSpacing: '1px', textTransform: 'uppercase' }}>Loading Products...</div>
+  return (
+    <div id="page-products" className="page active">
+
+      <SEO
+        title="Premium Himalayan Pink Salt Products | Bin Aouf Pakistan"
+        description="Explore Bin Aouf's premium Himalayan Pink Salt collection including edible salt, salt lamps, bath salt, cooking slabs, animal lick salt, spa products, salt tiles, and wholesale export solutions worldwide."
+        canonical="https://www.binaouf.com/products"
+      />
+
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: 'var(--muted)' }}>
+        <div style={{ fontSize: '1.2rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          Loading Products...
+        </div>
       </div>
-    )
-  }
+
+    </div>
+  )
+}
 
   if (error || categories.length === 0) {
-    return (
-      <div id="page-products" className="page active" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: 'var(--muted)', gap: 16 }}>
-        <div style={{ fontSize: '1.2rem', letterSpacing: '1px', textTransform: 'uppercase' }}>{error || 'No categories found.'}</div>
-        <button className="btn-primary" onClick={() => window.location.reload()}>Retry</button>
+  return (
+    <div id="page-products" className="page active">
+
+      <SEO
+        title="Premium Himalayan Pink Salt Products | Bin Aouf Pakistan"
+        description="Explore Bin Aouf's premium Himalayan Pink Salt collection including edible salt, salt lamps, bath salt, cooking slabs, animal lick salt, spa products, salt tiles, and wholesale export solutions worldwide."
+        canonical="https://www.binaouf.com/products"
+      />
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+          color: 'var(--muted)',
+          gap: 16
+        }}
+      >
+        <div style={{ fontSize: '1.2rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          {error || 'No categories found.'}
+        </div>
+
+        <button
+          className="btn-primary"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
       </div>
-    )
-  }
+
+    </div>
+  )
+}
 
   const normalizeSubcat = (value) => {
     if (value === null || value === undefined || value === '') return ''
@@ -449,10 +490,17 @@ export default function Products() {
   const hasSpec = (key) => visibleProducts.some(p => p.specs?.[key] && p.specs[key] !== '—' && p.specs[key] !== '-')
 
   return (
-    <div id="page-products" className="page active">
-      {/* BANNER */}
-      <div className="prod-hero-banner">
-        <div className="tag">Our Products</div>
+  <div id="page-products" className="page active">
+
+    <SEO
+      title="Premium Himalayan Pink Salt Products | Bin Aouf Pakistan"
+      description="Explore Bin Aouf's premium Himalayan Pink Salt collection including edible salt, salt lamps, bath salt, cooking slabs, animal lick salt, spa products, salt tiles, and wholesale export solutions worldwide."
+      canonical="https://www.binaouf.com/products"
+    />
+
+    {/* BANNER */}
+    <div className="prod-hero-banner">
+      <div className="tag">Our Products</div>
         <h1 className="sec-title white">Complete Himalayan Salt<br /><em>Product Range</em></h1>
         <p>Every product sourced directly from Pakistan's finest mines, processed in our own facility, and available in custom packaging.</p>
       </div>
