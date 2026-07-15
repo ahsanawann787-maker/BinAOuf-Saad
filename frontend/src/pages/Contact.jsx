@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useReveal } from '../hooks/useReveal'
+import SEO from '../components/SEO'
 import api from '../services/api'
 import { useSettings } from '../context/SettingsContext'
 
@@ -126,13 +127,20 @@ ${message}`;
   }
 
   return (
-    <div id="page-contact" className="page active">
-      {/* BANNER */}
-      <div className="contact-banner">
-        <div className="tag">Get In Touch</div>
-        <h1 className="sec-title white">Let's Do Business<br /><em>Together</em></h1>
-        <p>Whether you're placing your first order, requesting samples, or looking for a long-term supply partner, our team responds to every inquiry within 24 hours.</p>
-      </div>
+  <div id="page-contact" className="page active">
+
+    <SEO
+      title="Contact Bin Aouf | Himalayan Pink Salt Exporter Pakistan"
+      description="Contact Bin Aouf for wholesale Himalayan Pink Salt, private label manufacturing, bulk export, samples, and international business inquiries. We respond within 24 hours."
+      canonical="https://www.binaouf.com/contact"
+    />
+
+    {/* BANNER */}
+    <div className="contact-banner">
+      <div className="tag">Get In Touch</div>
+      <h1 className="sec-title white">Let's Do Business<br /><em>Together</em></h1>
+      <p>Whether you're placing your first order, requesting samples, or looking for a long-term supply partner, our team responds to every inquiry within 24 hours.</p>
+    </div>
 
       {/* CONTACT CARDS */}
       <div className="cm-cards">
