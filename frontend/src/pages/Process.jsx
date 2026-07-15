@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SEO from '../components/SEO'
 import { useReveal } from '../hooks/useReveal'
 import api, { API } from '../services/api'
 
@@ -78,11 +79,6 @@ export default function Process() {
   useReveal()
 
   useEffect(() => {
-    document.title = 'Our Extraction, Processing & Export Process — Bin Aouf'
-    const metaDesc = document.querySelector('meta[name="description"]')
-    if (metaDesc) {
-      metaDesc.setAttribute('content', 'Understand how we extract Himalayan salt ethically and wash, test, grade, package, and ship it to clients globally from Sargodha & Khewra.')
-    }
 
     async function loadSteps() {
       try {
@@ -101,11 +97,18 @@ export default function Process() {
 
 
   return (
-    <div id="page-process" className="page active">
-      {/* BANNER */}
-      <div className="process-banner">
-        <div className="tag">How It Works</div>
-        <h1 className="sec-title white">From Ancient Mine<br /><em>to Your Doorstep</em></h1>
+  <div id="page-process" className="page active">
+
+    <SEO
+      title="Our Manufacturing Process | Himalayan Pink Salt | Bin Aouf"
+      description="Discover Bin Aouf's 6-step Himalayan Pink Salt manufacturing process from mining and processing to quality control, packaging, and worldwide export."
+      canonical="https://www.binaouf.com/process"
+    />
+
+    {/* BANNER */}
+    <div className="process-banner">
+      <div className="tag">How It Works</div>
+      <h1 className="sec-title white">From Ancient Mine<br /><em>to Your Doorstep</em></h1>
         <p>Every Bin Aouf product follows a rigorous 6-step journey from hand-picked raw salt inside Pakistan's mines, through our processing facility, quality lab, and packaging centre, to delivery at your port worldwide.</p>
       </div>
 
