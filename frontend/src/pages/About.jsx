@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import SEO from '../components/SEO'
 import { useReveal } from '../hooks/useReveal'
 import api, { API } from '../services/api'
 import khewraMineImg from '../assets/images/khewra_mine.jpg'
@@ -96,9 +97,16 @@ export default function About() {
   }
 
   return (
-    <div id="page-about" className="page active">
-      {/* BANNER */}
-      <div className="about-banner">
+  <div id="page-about" className="page active">
+
+    <SEO
+      title="About Bin Aouf | Himalayan Pink Salt Manufacturer & Exporter"
+      description="Learn about Bin Aouf, a trusted Himalayan Pink Salt manufacturer and exporter from Pakistan. Discover our history, certifications, ethical sourcing, quality standards, and worldwide export services."
+      canonical="https://www.binaouf.com/about"
+    />
+
+    {/* BANNER */}
+    <div className="about-banner">
         <div className="tag">Who We Are</div>
         <h1 className="sec-title white">Born from the<br /><em>Mountains of Pakistan</em></h1>
         <p>Bin Aouf is a Pakistan-based manufacturer,local supplier, and exporter of premium Himalayan salt products, sourcing directly from Khewra, Warcha, and Kalabagh since 2008.</p>
