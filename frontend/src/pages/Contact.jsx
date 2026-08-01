@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useReveal } from '../hooks/useReveal'
 import SEO from '../components/SEO'
+import contactPageSchema from '../schema/contactPageSchema'
 import api from '../services/api'
 import { useSettings } from '../context/SettingsContext'
 

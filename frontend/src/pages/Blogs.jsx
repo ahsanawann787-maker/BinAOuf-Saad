@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
 import SEO from '../components/SEO'
+import blogPageSchema from '../schema/blogPageSchema'
 import api, { API } from '../services/api'
 
 function getImageUrl(img) {
@@ -69,6 +70,7 @@ export default function Blogs() {
       title="Latest Himalayan Salt Industry Insights & News | Bin Aouf"
       description="Stay updated with our blog. Articles covering Himalayan salt benefits, retail packaging solutions, wholesale trade practices, mine source guides, and decoration tips."
       canonical="https://www.binaouf.com/blogs"
+      schema={blogPageSchema}
     />
 
     {/* BANNER */}
