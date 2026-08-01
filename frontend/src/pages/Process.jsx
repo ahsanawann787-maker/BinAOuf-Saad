@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import SEO from '../components/SEO'
+import processPageSchema from '../schema/processPageSchema'
 import { useReveal } from '../hooks/useReveal'
 import api, { API } from '../services/api'
 
@@ -103,6 +104,7 @@ export default function Process() {
       title="Our Manufacturing Process | Himalayan Pink Salt | Bin Aouf"
       description="Discover Bin Aouf's 6-step Himalayan Pink Salt manufacturing process from mining and processing to quality control, packaging, and worldwide export."
       canonical="https://www.binaouf.com/process"
+      schema={processPageSchema}
     />
 
     {/* BANNER */}
