@@ -13,6 +13,17 @@ const organizationSchema = {
     "https://www.instagram.com/binaoufsaltsofficial"
   ]
 }
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Bin Aouf",
+  "url": "https://www.binaouf.com",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://www.binaouf.com/products?search={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
 
 export default function SEO({
   title,
@@ -58,6 +69,9 @@ export default function SEO({
       <meta name="twitter:image" content={image} />
       <script type="application/ld+json">
   {JSON.stringify(organizationSchema)}
+</script>
+<script type="application/ld+json">
+  {JSON.stringify(websiteSchema)}
 </script>
     </Helmet>
   )
