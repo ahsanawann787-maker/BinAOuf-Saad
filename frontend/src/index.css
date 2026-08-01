@@ -86,7 +86,7 @@ nav.solid .burger span{background:var(--ink)}
 .home-cats{padding:100px 80px;background:var(--cream2)}
 .home-cats-header{text-align:center;margin-bottom:54px}
 .cats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
-.cat-card{position:relative;overflow:hidden;cursor:pointer;height:420px;background:linear-gradient(155deg,var(--rose-dark),var(--terra-deep))}
+.cat-card{position:relative;overflow:hidden;cursor:pointer;aspect-ratio:4 / 3;background:linear-gradient(155deg,var(--rose-dark),var(--terra-deep))}
 .cat-img-bg{position:absolute;inset:0;transition:transform .7s cubic-bezier(.22,.61,.36,1)}
 .cat-card:hover .cat-img-bg{transform:scale(1.08)}
 .cat-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(44,18,10,.9) 0%,rgba(44,18,10,.2) 55%,transparent 100%)}
@@ -486,9 +486,9 @@ footer{background:var(--ink);padding:70px 80px 32px;color:rgba(255,255,255,.65)}
 .cats-slider-track{display:flex;gap:3px;width:max-content;animation:catSlide 38s linear infinite}
 .cats-slider-track:hover{animation-play-state:paused}
 @keyframes catSlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.cat-slide-card{flex:0 0 280px}
+.cat-slide-card{flex:0 0 360px}
 @media(max-width:768px){
-  .cat-slide-card{flex:0 0 230px}
+  .cat-slide-card{flex:0 0 280px}
   .cats-slider-track{animation-duration:30s}
 }
 .whyus-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:50px}
