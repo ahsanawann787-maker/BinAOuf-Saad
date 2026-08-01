@@ -1,36 +1,14 @@
 import { Helmet } from 'react-helmet-async'
-
-const organizationSchema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Bin Aouf",
-  "url": "https://www.binaouf.com",
-  "logo": "https://www.binaouf.com/logo.png",
-  "description":
-    "Premium Himalayan Pink Salt Manufacturer and Exporter from Pakistan.",
-  "sameAs": [
-    "https://www.facebook.com/BinAoufSaltsOfficials",
-    "https://www.instagram.com/binaoufsaltsofficial"
-  ]
-}
-const websiteSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "Bin Aouf",
-  "url": "https://www.binaouf.com",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://www.binaouf.com/products?search={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
-}
+import organizationSchema from '../schema/organizationSchema'
+import websiteSchema from '../schema/websiteSchema'
 
 export default function SEO({
   title,
   description,
   canonical,
   image = 'https://www.binaouf.com/og-image.jpg',
-  type = 'website'
+  type = 'website',
+  schema = null
 }) {
   return (
     <Helmet>
@@ -73,6 +51,11 @@ export default function SEO({
 <script type="application/ld+json">
   {JSON.stringify(websiteSchema)}
 </script>
+{schema && (
+  <script type="application/ld+json">
+    {JSON.stringify(schema)}
+  </script>
+)}
     </Helmet>
   )
 }
