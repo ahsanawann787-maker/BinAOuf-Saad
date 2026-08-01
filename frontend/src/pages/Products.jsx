@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import SEO from '../components/SEO'
+import collectionPageSchema from '../schema/collectionPageSchema'
 import { useReveal } from '../hooks/useReveal'
 import api, { API } from '../services/api'
 import pinkTiles from '../assets/images/pink_salt_tiles.jpg'
@@ -392,6 +393,7 @@ export default function Products() {
         title="Premium Himalayan Pink Salt Products | Bin Aouf Pakistan"
         description="Explore Bin Aouf's premium Himalayan Pink Salt collection including edible salt, salt lamps, bath salt, cooking slabs, animal lick salt, spa products, salt tiles, and wholesale export solutions worldwide."
         canonical="https://www.binaouf.com/products"
+        schema={collectionPageSchema}
       />
 
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: 'var(--muted)' }}>

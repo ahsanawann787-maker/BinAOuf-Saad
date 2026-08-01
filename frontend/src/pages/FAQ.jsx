@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReveal } from '../hooks/useReveal'
 import SEO from '../components/SEO'
+import faqPageSchema from '../schema/faqPageSchema'
 import api from '../services/api'
 
 export default function FAQ() {
@@ -70,6 +71,7 @@ export default function FAQ() {
       title="Frequently Asked Questions | Bin Aouf Himalayan Pink Salt"
       description="Find answers about Himalayan Pink Salt exports, wholesale orders, private labeling, shipping, packaging, certifications, and international supply from Bin Aouf."
       canonical="https://www.binaouf.com/faq"
+      schema={faqPageSchema}
     />
 
     {/* BANNER */}

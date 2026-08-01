@@ -133,6 +133,7 @@ ${message}`;
       title="Contact Bin Aouf | Himalayan Pink Salt Exporter Pakistan"
       description="Contact Bin Aouf for wholesale Himalayan Pink Salt, private label manufacturing, bulk export, samples, and international business inquiries. We respond within 24 hours."
       canonical="https://www.binaouf.com/contact"
+      schema={contactPageSchema}
     />
 
     {/* BANNER */}
