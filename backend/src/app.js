@@ -18,18 +18,13 @@ export function createApp() {
   app.use(compression());
   app.use(morgan(env.isProd ? 'combined' : 'dev'));
 
-  // CORS
-  console.log("CORS ORIGINS FROM VERCEL:", env.corsOrigins);
-  const allowAll = env.corsOrigins.includes('*');
-  app.use(
-    cors({
-      origin(origin, cb) {
-        if (allowAll || !origin || env.corsOrigins.includes(origin)) return cb(null, true);
-        cb(new Error(`CORS blocked: ${origin}`));
-      },
-      credentials: true,
-    })
-  );
+ // TEMP DEBUG CORS
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
   // Body parsing — generous limit because product/cert images may arrive as base64.
   app.use(express.json({ limit: '12mb' }));
