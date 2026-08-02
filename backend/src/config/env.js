@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+console.log("CORS_ORIGINS =", process.env.CORS_ORIGINS);
+console.log("PARSED =", (process.env.CORS_ORIGINS || '*').split(','));
+
 const required = ['MONGO_URI', 'JWT_SECRET'];
 const missing = required.filter((k) => !process.env[k]);
 if (missing.length) {

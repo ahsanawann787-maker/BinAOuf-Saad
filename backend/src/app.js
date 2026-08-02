@@ -19,6 +19,7 @@ export function createApp() {
   app.use(morgan(env.isProd ? 'combined' : 'dev'));
 
   // CORS
+  console.log("CORS ORIGINS FROM VERCEL:", env.corsOrigins);
   const allowAll = env.corsOrigins.includes('*');
   app.use(
     cors({
