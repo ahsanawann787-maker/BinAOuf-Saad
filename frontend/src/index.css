@@ -246,7 +246,7 @@ nav.solid .burger span{background:var(--ink)}
 .prod-demand ul{list-style:none;display:flex;flex-direction:column;gap:10px}
 .prod-demand li{font-size:14px;color:rgba(255,255,255,.85);font-weight:300;line-height:1.6;padding-left:22px;position:relative}
 .prod-demand li::before{content:'';position:absolute;left:0;top:8px;width:8px;height:8px;background:var(--gold-lt);transform:rotate(45deg)}
-.prod-demand-img{position:relative;z-index:1;height:170px;overflow:hidden;align-self:stretch;margin:-32px -36px -32px 0;background-color:var(--terra-deep);background-image:linear-gradient(rgba(58,23,16,.32),rgba(20,8,4,.45)),url('./assets/images/story_bg.jpg');background-repeat:no-repeat;background-size:contain;background-position:center;}
+.prod-demand-img{position:relative;z-index:1;height:170px;overflow:hidden;align-self:stretch;margin:-32px -36px -32px 0;background-color:var(--terra-deep);background-image:linear-gradient(rgba(58,23,16,.32),rgba(20,8,4,.45)),url('./assets/images/story_bg.jpg');background-repeat:no-repeat;background-size:cover;background-position:right center;}
 .prod-demand-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,var(--terra-deep) 0%,rgba(92,35,24,.5) 18%,transparent 50%),linear-gradient(155deg,rgba(92,35,24,.25),rgba(20,8,4,.35))}
 .about-banner{background:linear-gradient(135deg,var(--terra) 0%,var(--terra-deep) 100%);padding:140px 80px 80px;position:relative;overflow:hidden}
 .about-banner::before{content:'';position:absolute;inset:0;background-image:radial-gradient(ellipse at 70% 40%,rgba(212,135,107,.2) 0%,transparent 55%)}
